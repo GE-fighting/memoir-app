@@ -44,6 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const userData = await userService.getCurrentUser();
           setUser(userData);
+          // 确保用户ID被保存到localStorage
+          localStorage.setItem('userId', userData.id.toString());
         } catch (error) {
           // 如果令牌无效，尝试刷新
           const refreshSuccess = await refreshTokens();
@@ -73,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await userService.getCurrentUser();
         setUser(userData);
+        // 确保用户ID被保存到localStorage
+        localStorage.setItem('userId', userData.id.toString());
         return true;
       } catch {
         return false;
@@ -97,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await userService.getCurrentUser();
         setUser(userData);
+        // 保存用户ID到localStorage
+        localStorage.setItem('userId', userData.id.toString());
         return true;
       } catch {
         return false;
@@ -127,6 +133,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await userService.getCurrentUser();
         setUser(userData);
+        // 保存用户ID到localStorage
+        localStorage.setItem('userId', userData.id.toString());
         return true;
       } catch {
         return false;

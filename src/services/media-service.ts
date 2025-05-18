@@ -10,6 +10,20 @@ import {
 } from "./api-types";
 
 /**
+ * 个人媒体创建请求参数
+ */
+export interface CreatePersonalMediaWithURLParams {
+  mediaType: 'photo' | 'video';
+  category: string;
+  title: string;
+  mediaUrl: string;
+  thumbnailUrl?: string;
+  description?: string;
+  isPrivate?: boolean;
+  tags?: string[];
+}
+
+/**
  * 媒体服务
  * 处理与照片和视频相关的 API 请求
  */
@@ -131,4 +145,80 @@ export const mediaService = {
 
     return results;
   },
+
+  /**
+   * 通过URL创建个人媒体
+   * 用于前端上传到OSS后，将媒体信息保存到数据库
+   * @param params 创建参数
+   * @returns 创建的媒体对象
+   */
+  createPersonalMediaWithURL: async (params: CreatePersonalMediaWithURLParams): Promise<Media> => {
+    return apiClient.post<Media>('/personal-media/url', params);
+  },
+
+  /**
+   * 获取个人媒体列表
+   * @param category 分类
+   * @param mediaType 媒体类型
+   * @param page 页码
+   * @param pageSize 每页数量
+   * @returns 分页媒体列表
+   */
+  queryPersonalMedia: async (
+    category?: string,
+    mediaType?: string,
+    page: number = 1,
+    pageSize: number = 20
+  ): Promise<PaginatedResponse<Media>> => {
+    let queryParams = new URLSearchParams();
+    
+    if (category) queryParams.append('category', category);
+    if (mediaType) queryParams.append('mediaType', mediaType);
+    queryParams.append('page', page.toString());
+    queryParams.append('pageSize', pageSize.toString());
+    
+    return apiClient.get<PaginatedResponse<Media>>(`/personal-media?${queryParams.toString()}`);
+  },
+  
+  /**
+   * 获取单个媒体详情
+   * @param id 媒体ID
+   * @returns 媒体对象
+   */
+  getPersonalMediaById: async (id: number): Promise<Media> => {
+    return apiClient.get<Media>(`/personal-media/${id}`);
+  },
+
+  /**
+   * 更新媒体信息
+   * @param id 媒体ID
+   * @param title 标题
+   * @param description 描述
+   * @param isPrivate 是否私密
+   * @param tags 标签
+   * @returns 更新后的媒体对象
+   */
+  updatePersonalMedia: async (
+    id: number, 
+    title: string, 
+    description: any,
+    isPrivate: boolean = false,
+    tags: string[] = []
+  ): Promise<Media> => {
+    return apiClient.put<Media>(`/personal-media/${id}`, {
+      title,
+      description: JSON.stringify(description),
+      isPrivate,
+      tags
+    });
+  },
+
+  /**
+   * 删除媒体
+   * @param id 媒体ID
+   * @returns void
+   */
+  deletePersonalMedia: async (id: number): Promise<void> => {
+    return apiClient.delete(`/personal-media/${id}`);
+  }
 }; 

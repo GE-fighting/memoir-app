@@ -25,7 +25,9 @@ export default {
       colors: {
         primary: 'var(--primary)',
         'primary-light': 'var(--primary-light)',
+        'primary-dark': 'var(--primary-dark)',
         secondary: 'var(--secondary)',
+        accent: 'var(--accent)',
         dark: 'var(--dark)',
         light: 'var(--light)',
         gray: 'var(--gray)',

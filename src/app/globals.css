@@ -10,7 +10,9 @@
 :root {
   --primary: #6a7bd9;
   --primary-light: #8692e0;
+  --primary-dark: #4f5eb8;
   --secondary: #f6866a;
+  --accent: #6a4c93;
   --dark: #2a3052;
   --light: #f5f7ff;
   --gray: #e1e5f2;
@@ -44,6 +46,8 @@
     --light: #1a1c2e;
     --gray: #3a3f5c;
     --gray-dark: #7c849b;
+    --primary-dark: #5e6dcf;
+    --accent: #8a64b8;
   }
 }
 
@@ -1103,17 +1107,26 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    font-weight: 500;
   }
 
-  .btn-primary {
-    background-color: var(--primary);
-    color: white;
+  /* 修改主要按钮样式，提高优先级 */
+  .btn.btn-primary {
+    background-color: var(--accent) !important; /* 使用!important确保优先级 */
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(106, 76, 147, 0.4);
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 24px;
   }
 
-  .btn-primary:hover {
-    background-color: var(--primary-light);
+  .btn.btn-primary:hover {
+    background-color: #5a3f7c !important; /* 悬停时更深的紫色 */
     transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 12px rgba(106, 76, 147, 0.5);
   }
 
   .btn-secondary {
@@ -1128,5 +1141,29 @@ input:focus, select:focus, textarea:focus {
 
   .btn-outline:hover {
     background-color: var(--gray);
+  }
+
+  /* 个人空间标签页样式 */
+  .personal-content-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--gray);
+  }
+
+  .personal-content-tabs .tab {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--gray-dark);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .personal-content-tabs .tab:hover {
+    color: var(--dark);
+  }
+
+  .personal-content-tabs .tab.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
   }
 }

@@ -47,6 +47,12 @@ const menuItems: MenuItem[] = [
     labelEn: 'Albums'
   },
   {
+    path: '/personal',
+    icon: 'fas fa-user-circle',
+    labelZh: '个人空间',
+    labelEn: 'Personal Space'
+  },
+  {
     path: '/wishlist',
     icon: 'fas fa-heart-circle-check',
     labelZh: '心愿画卷',

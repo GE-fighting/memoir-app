@@ -121,6 +121,7 @@ export interface Media {
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
+  path?: string;
 }
 
 export interface UpdateMediaRequest {

@@ -93,6 +93,18 @@ export const authService = {
   saveTokens: (tokens: AuthResponse): void => {
     localStorage.setItem("accessToken", tokens.access_token);
     localStorage.setItem("refreshToken", tokens.refresh_token);
+    
+    // 从访问令牌中提取用户ID并保存
+    try {
+      // JWT token 的格式是 header.payload.signature
+      const payload = tokens.access_token.split('.')[1];
+      const decodedPayload = JSON.parse(atob(payload));
+      if (decodedPayload.sub) {
+        localStorage.setItem("userId", decodedPayload.sub.toString());
+      }
+    } catch (error) {
+      console.error("无法从令牌中提取用户ID:", error);
+    }
   },
 
   /**
@@ -101,6 +113,7 @@ export const authService = {
   clearTokens: (): void => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userId");
   },
 
   /**
