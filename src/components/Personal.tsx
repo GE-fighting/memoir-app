@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import MediaUpload from '@/components/MediaUpload';
 import { T, useLanguage } from './LanguageContext';
-import MediaUpload from './MediaUpload';
-import { getFilesByCategory, FileListItem } from '@/lib/services/ossService';
+import { FileListItem, getSignedUrl } from '@/lib/services/ossService';
+import { QueryPersonalMediaParams } from '@/services/personal-media-service';
 
 export default function Personal() {
   const { language } = useLanguage();
-  const [activeTab, setActiveTab] = useState('photos');
+  const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [mediaFiles, setMediaFiles] = useState<FileListItem[]>([]);
@@ -21,33 +22,78 @@ export default function Personal() {
       setError(null);
       
       // 导入媒体服务
-      const { mediaService } = await import('@/services/media-service');
+      const { mediaService } = await import('@/services/personal-media-service');
+      
+      // 设置查询参数
+      const params: QueryPersonalMediaParams = {
+        media_type: activeTab === 'photos' ? 'photo' : activeTab === 'videos' ? 'video' : undefined
+      };
       
       // 使用API获取媒体列表，而不是直接从OSS获取
-      const response = await mediaService.queryPersonalMedia(
-        undefined, // 不按分类筛选
-        activeTab === 'photos' ? 'photo' : activeTab === 'videos' ? 'video' : undefined
-      );
+      const response = await mediaService.queryPersonalMedia(params);
       
       // 将API响应的Media对象转换为FileListItem格式
-      const fileItems: FileListItem[] = response.items.map(media => {
-        // 从URL中提取文件名
-        const url = new URL(media.url);
-        const pathParts = url.pathname.split('/');
-        const fileName = pathParts[pathParts.length - 1];
+      const fileItemsPromises = response.data.map(async media => {
+        // 从URL中提取文件名 (使用media_url字段，若不存在则回退到url)
+        const mediaUrl = media.media_url || '';
+        let fileName = '';
         
+        try {
+          if (mediaUrl) {
+            const url = new URL(mediaUrl);
+            const pathParts = url.pathname.split('/');
+            fileName = pathParts[pathParts.length - 1];
+            
+            // 获取带有授权的签名URL
+            const signedUrl = await getSignedUrl(mediaUrl);
+            
+            // 处理缩略图URL，如果存在也获取签名URL
+            let thumbnailSignedUrl = '';
+            if (media.thumbnail_url) {
+              try {
+                // 直接使用getSignedUrl，它已经能处理处理参数了
+                thumbnailSignedUrl = await getSignedUrl(media.thumbnail_url);
+              } catch (thumbErr) {
+                console.error('处理缩略图URL失败:', thumbErr);
+              }
+            }
+            
+            return {
+              name: media.title || fileName,
+              url: signedUrl, // 使用带授权的URL
+              lastModified: media.updated_at || media.created_at,
+              size: 0, // API没有提供文件大小信息
+              type: media.media_type === 'photo' ? 'image' : 'video',
+              path: '',  // 不再使用path字段
+              originalUrl: mediaUrl, // 保存原始URL，便于需要时重新获取签名
+              thumbnail_url: thumbnailSignedUrl || '' // 使用带授权的缩略图URL
+            };
+          }
+        } catch (e) {
+          console.error('处理媒体URL失败:', e);
+        }
+        
+        // 如果处理失败，返回一个默认对象
         return {
-          name: media.title || fileName,
-          url: media.url,
+          name: media.title || '未知文件',
+          url: '', // 空URL
           lastModified: media.updated_at || media.created_at,
-          size: 0, // API没有提供文件大小信息
+          size: 0,
           type: media.media_type === 'photo' ? 'image' : 'video',
-          path: media.path || '' // 使用新添加的path字段
+          path: '',
+          originalUrl: mediaUrl,
+          thumbnail_url: ''
         };
       });
       
+      // 等待所有URL处理完成
+      const fileItems = await Promise.all(fileItemsPromises);
+      
+      // 过滤掉URL为空的项
+      const validFileItems = fileItems.filter(item => item.url);
+      
       // 设置媒体文件列表
-      setMediaFiles(fileItems);
+      setMediaFiles(validFileItems);
     } catch (err) {
       console.error('加载媒体文件失败:', err);
       setError(err instanceof Error ? err.message : '加载媒体文件失败');
@@ -73,43 +119,6 @@ export default function Personal() {
         file.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : mediaFiles;
-  
-  // 将媒体文件按上传时间分组
-  const groupedMedia = filteredMedia.reduce((acc, file) => {
-    // 使用月份作为分组依据
-    let uploadDate = new Date(file.lastModified); // 默认使用 lastModified
-    
-    // 尝试从文件路径中提取日期信息
-    if (file.path) {
-      const pathParts = file.path.split('/');
-      if (pathParts.length >= 5) {
-        // 路径格式为 userId/year/month/day/fileName
-        try {
-          const year = parseInt(pathParts[1]);
-          const month = parseInt(pathParts[2]) - 1; // 月份从0开始
-          const day = parseInt(pathParts[3]);
-          
-          if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-            uploadDate = new Date(year, month, day);
-          }
-        } catch (e) {
-          // 解析失败情况下已有默认值
-        }
-      }
-    }
-    
-    // 格式化显示
-    const monthYear = uploadDate.toLocaleDateString(
-      language === 'zh' ? 'zh-CN' : 'en-US',
-      { year: 'numeric', month: 'long' }
-    );
-    
-    if (!acc[monthYear]) {
-      acc[monthYear] = [];
-    }
-    acc[monthYear].push(file);
-    return acc;
-  }, {} as Record<string, FileListItem[]>);
   
   return (
     <>
@@ -195,45 +204,35 @@ export default function Personal() {
 
       {/* 媒体内容展示 */}
       {!loading && !error && filteredMedia.length > 0 && (
-        <div className="albums-grid">
-          {Object.entries(groupedMedia).map(([monthYear, files]) => (
-            <div key={monthYear} className="album-card">
-              <div className="album-cover">
-                {/* 使用第一个文件作为封面 */}
-                {files[0].type === 'image' ? (
-                  <img src={files[0].url} alt={monthYear} />
-                ) : (
+        <div className="media-grid">
+          {filteredMedia.map((file, index) => (
+            <div key={index} className="media-item">
+              {file.type === 'image' ? (
+                <div className="image-container">
+                  <img src={file.thumbnail_url || file.url} alt={file.name} className="media-image" />
+                  <div className="media-actions">
+                    <button className="media-action-btn"><i className="fas fa-edit"></i></button>
+                    <button className="media-action-btn"><i className="fas fa-trash"></i></button>
+                  </div>
+                </div>
+              ) : (
+                <div className="video-container">
                   <div className="video-thumbnail">
-                    <img src={`https://placehold.co/600x400/666/fff?text=Video`} alt={monthYear} />
+                    <img 
+                      src={file.thumbnail_url || `https://placehold.co/600x400/666/fff?text=Video`} 
+                      alt={file.name} 
+                      className="media-image" 
+                    />
                     <div className="play-icon">
                       <i className="fas fa-play"></i>
                     </div>
                   </div>
-                )}
-                <div className="album-info">
-                  <div className="album-name">
-                    {monthYear}
-                  </div>
-                  <div className="album-meta">
-                    <div>
-                      {activeTab === 'photos'
-                        ? <T zh={`${files.length}张照片`} en={`${files.length} Photos`} />
-                        : <T zh={`${files.length}个视频`} en={`${files.length} Videos`} />
-                      }
-                    </div>
-                    <div>
-                      {new Date(files[0].lastModified).toLocaleDateString(
-                        language === 'zh' ? 'zh-CN' : 'en-US',
-                        { year: 'numeric', month: 'short' }
-                      )}
-                    </div>
+                  <div className="media-actions">
+                    <button className="media-action-btn"><i className="fas fa-edit"></i></button>
+                    <button className="media-action-btn"><i className="fas fa-trash"></i></button>
                   </div>
                 </div>
-                <div className="album-actions">
-                  <button><i className="fas fa-edit"></i></button>
-                  <button><i className="fas fa-trash"></i></button>
-                </div>
-              </div>
+              )}
             </div>
           ))}
         </div>

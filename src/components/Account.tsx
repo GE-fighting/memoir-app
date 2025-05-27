@@ -1,10 +1,25 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { T, useLanguage } from './LanguageContext';
+import { userService } from '../services/user-service';
 
 export default function Account() {
   const { language } = useLanguage();
+  const [hasCouple, setHasCouple] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const checkCoupleStatus = async () => {
+      try {
+        const exists = await userService.existCouple();
+        setHasCouple(exists);
+      } catch (error) {
+        console.error('Failed to check couple status:', error);
+      }
+    };
+    
+    checkCoupleStatus();
+  }, []);
   
   return (
     <div className="account-grid">
@@ -29,31 +44,20 @@ export default function Account() {
           </div>
         </div>
         <div className="form-group">
-          <label><T zh="关系名称" en="Relationship Name" /></label>
-          <input type="text" defaultValue="Alex & Jamie's Journey" />
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label><T zh="Alex的名字" en="Alex's Name" /></label>
-            <input type="text" defaultValue="Alexander Mitchell" />
-          </div>
-          <div className="form-group">
-            <label><T zh="Jamie的名字" en="Jamie's Name" /></label>
-            <input type="text" defaultValue="Jamie Thompson" />
-          </div>
-        </div>
-        <div className="form-group">
-          <label><T zh="纪念日" en="Anniversary Date" /></label>
+          <label><T zh="缘定之日" en="Anniversary Date" /></label>
           <input type="date" defaultValue="2021-08-18" />
         </div>
         <div className="form-group">
-          <label><T zh="共享邮箱（用于通知）" en="Shared Email (for notifications)" /></label>
-          <input type="email" defaultValue="us@alexjamie.com" />
+          <label><T zh="Destin密钥" en="Destin Key" /></label>
+          <input type="text" defaultValue="LOVE-ALEX-JAMIE-2021" readOnly />
+
         </div>
-        <button className="btn btn-primary">
-          <i className="fas fa-save"></i>
-          <T zh="保存更改" en="Save Changes" />
-        </button>
+        {!hasCouple && (
+          <button className="btn btn-primary">
+            <i className="fas fa-save"></i>
+            <T zh="步入爱河" en="Save Changes" />
+          </button>
+        )}
       </div>
 
       <div className="card">

@@ -95,8 +95,8 @@ class ApiClient {
   // 基础请求方法
   async get<T>(url: string, config?: AxiosRequestConfig) {
     try {
-      const response = await this.client.get<T>(url, config);
-      return response.data;
+      const response = await this.client.get(url, config);
+      return response.data.data as T;
     } catch (error) {
       this.handleError(error as AxiosError);
       throw error;
@@ -105,8 +105,8 @@ class ApiClient {
 
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig) {
     try {
-      const response = await this.client.post<T>(url, data, config);
-      return response.data;
+      const response = await this.client.post(url, data, config);
+      return response.data.data as T;
     } catch (error) {
       this.handleError(error as AxiosError);
       throw error;
@@ -115,8 +115,8 @@ class ApiClient {
 
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig) {
     try {
-      const response = await this.client.put<T>(url, data, config);
-      return response.data;
+      const response = await this.client.put(url, data, config);
+      return response.data.data as T;
     } catch (error) {
       this.handleError(error as AxiosError);
       throw error;
@@ -125,8 +125,8 @@ class ApiClient {
 
   async delete<T>(url: string, config?: AxiosRequestConfig) {
     try {
-      const response = await this.client.delete<T>(url, config);
-      return response.data;
+      const response = await this.client.delete(url, config);
+      return response.data.data as T;
     } catch (error) {
       this.handleError(error as AxiosError);
       throw error;

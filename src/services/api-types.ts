@@ -103,25 +103,24 @@ export enum MediaType {
   VIDEO = "video",
 }
 
-export interface Media {
-  id: number;
+export interface PersonalMedia {
+  id: string;
+  user_id?: string;
   title?: string;
   description?: string;
   media_type: MediaType;
-  url: string;
+  media_url: string;
+  url?: string;
   thumbnail_url?: string;
-  taken_at?: string;
   location_id?: number;
   location?: {
     name: string;
     latitude: number;
     longitude: number;
   };
-  tags: string[];
-  metadata: Record<string, any>;
+  category?: string;
   created_at: string;
   updated_at: string;
-  path?: string;
 }
 
 export interface UpdateMediaRequest {
@@ -173,22 +172,34 @@ export interface PaginationParams {
   limit?: number;
 }
 
+// 更新的分页参数，与后端一致
+export interface PageParams {
+  page?: number;
+  page_size?: number;
+}
+
 export interface PaginatedResponse<T> {
-  items: T[];
+  data: T[];
   total: number;
   page: number;
   limit: number;
   total_pages: number;
 }
 
+
+
 // 通用响应类型
 export interface ApiResponse<T> {
-  data: T;
+  success: boolean;
+  code: number;
   message?: string;
+  data?: T;
+  error?: string;
 }
 
 export interface ApiError {
   error: string;
   message: string;
   status: number;
-} 
+}
+

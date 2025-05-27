@@ -41,4 +41,12 @@ export const userService = {
   updateUserPreferences: async (preferences: Partial<UserPreferences>): Promise<UserPreferences> => {
     return apiClient.put<UserPreferences>("/users/preferences", preferences);
   },
+
+  /**
+   * 获取用户是否存在情侣关系
+   * @returns 是否存在情侣关系
+   */
+  existCouple: async (): Promise<boolean> => {
+    return apiClient.get<boolean>("/users/exist-couple");
+  },
 }; 

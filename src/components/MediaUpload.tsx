@@ -3,6 +3,8 @@
 import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import { useOSSUpload } from '@/lib/hooks/useOSSUpload';
+import { getMediaThumbnail } from '@/lib/services/ossService';
+import { mediaService } from '@/services/personal-media-service';
 
 // 文件上传项类型
 type UploadItem = {
@@ -129,27 +131,43 @@ export default function MediaUpload({ onClose }: { onClose: () => void }) {
       // 如果上传成功，将媒体信息保存到数据库
       if (uploadResults && uploadResults.length > 0) {
         try {
-          // 导入媒体服务
-          const { mediaService } = await import('@/services/media-service');
-          
           // 保存每个媒体信息
           for (const result of uploadResults) {
-            await mediaService.createPersonalMediaWithURL({
-              mediaType: result.type.startsWith('image/') ? 'photo' : 'video',
-              category: 'personal', // 可以使用默认分类或让用户选择
-              title: result.name,
-              mediaUrl: result.url,
-              thumbnailUrl: result.type.startsWith('image/') ? result.url : '', // 图片用自身作为缩略图
-              isPrivate: false,
-              tags: []
-            });
+            // 判断媒体类型
+            const isVideo = result.type.startsWith('video/');
+            const mediaType = isVideo ? 'video' : 'image';
+            
+            try {     
+              // 生成缩略图
+              const thumbnailUrl = await getMediaThumbnail(
+                result.url,
+                mediaType,
+                isVideo ? { mode: 'fast' } : {}
+              );
+              
+              // 保存媒体信息
+              await mediaService.createPersonalMediaWithURL({
+                media_type: isVideo ? 'video' : 'photo',
+                title: result.name,
+                media_url: result.url,
+                thumbnail_url: thumbnailUrl,
+              });
+            } catch (error: any) {
+              console.error('媒体处理失败:', error);
+              throw new Error(`${result.name} 处理失败: ${error.message || '未知错误'}`);
+            }
           }
           
           // 上传成功，通知父组件
           onClose?.();
         } catch (err) {
           console.error('保存媒体信息失败:', err);
-          // 即使保存信息失败，文件仍然已上传到OSS，所以不标记为错误
+          // 显示错误提示
+          setUploadItems(prev => prev.map(item => ({
+            ...item,
+            status: 'error',
+            error: err instanceof Error ? err.message : '保存媒体信息失败',
+          })));
         }
       }
     } catch (err) {

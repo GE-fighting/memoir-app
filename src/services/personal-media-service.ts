@@ -2,25 +2,34 @@
 
 import { apiClient } from "./api-client";
 import { 
-  Media, 
-  MediaType,
+  PersonalMedia, 
   UpdateMediaRequest,
-  PaginationParams, 
-  PaginatedResponse 
+  PaginatedResponse,
+  PageParams,
 } from "./api-types";
 
 /**
  * 个人媒体创建请求参数
  */
 export interface CreatePersonalMediaWithURLParams {
-  mediaType: 'photo' | 'video';
-  category: string;
-  title: string;
-  mediaUrl: string;
-  thumbnailUrl?: string;
+  media_type: 'photo' | 'video';
+  category?: string;
+  title?: string;
+  media_url: string;
+  thumbnail_url: string;
   description?: string;
-  isPrivate?: boolean;
-  tags?: string[];
+}
+
+/**
+ * 个人媒体查询参数
+ */
+export interface QueryPersonalMediaParams {
+  page?: number;
+  page_size?: number;
+  category?: string;
+  media_type?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 /**
@@ -33,14 +42,8 @@ export const mediaService = {
    * @param params 分页和过滤参数
    * @returns 媒体列表
    */
-  getMediaList: async (params?: PaginationParams & {
-    type?: MediaType;
-    tags?: string[];
-    startDate?: string;
-    endDate?: string;
-    locationId?: number;
-  }): Promise<PaginatedResponse<Media>> => {
-    return apiClient.get<PaginatedResponse<Media>>("/media", { params });
+  getMediaList: async (params?: PageParams): Promise<PaginatedResponse<PersonalMedia>> => {
+    return apiClient.post<PaginatedResponse<PersonalMedia>>("/personal-media/page", { params });
   },
 
   /**
@@ -48,8 +51,8 @@ export const mediaService = {
    * @param id 媒体ID
    * @returns 媒体信息
    */
-  getMedia: async (id: number): Promise<Media> => {
-    return apiClient.get<Media>(`/media/${id}`);
+  getMedia: async (id: number): Promise<PersonalMedia> => {
+    return apiClient.get<PersonalMedia>(`/personal-media/${id}`);
   },
 
   /**
@@ -64,7 +67,7 @@ export const mediaService = {
     taken_at?: string;
     location_id?: number;
     tags?: string[];
-  }): Promise<Media> => {
+  }): Promise<PersonalMedia> => {
     const formData = new FormData();
     formData.append("file", file);
     
@@ -98,8 +101,8 @@ export const mediaService = {
    * @param mediaData 媒体数据
    * @returns 更新后的媒体信息
    */
-  updateMedia: async (id: number, mediaData: UpdateMediaRequest): Promise<Media> => {
-    return apiClient.put<Media>(`/media/${id}`, mediaData);
+  updateMedia: async (id: number, mediaData: UpdateMediaRequest): Promise<PersonalMedia> => {
+    return apiClient.put<PersonalMedia>(`/media/${id}`, mediaData);
   },
 
   /**
@@ -124,8 +127,8 @@ export const mediaService = {
       tags?: string[];
     },
     onProgress?: (progress: number) => void
-  ): Promise<Media[]> => {
-    const results: Media[] = [];
+  ): Promise<PersonalMedia[]> => {
+    const results: PersonalMedia[] = [];
     let completed = 0;
 
     for (const file of files) {
@@ -152,73 +155,33 @@ export const mediaService = {
    * @param params 创建参数
    * @returns 创建的媒体对象
    */
-  createPersonalMediaWithURL: async (params: CreatePersonalMediaWithURLParams): Promise<Media> => {
-    return apiClient.post<Media>('/personal-media/url', params);
+  createPersonalMediaWithURL: async (params: CreatePersonalMediaWithURLParams): Promise<PersonalMedia> => {
+    return apiClient.post<PersonalMedia>('/personal-media/url', params);
   },
 
   /**
    * 获取个人媒体列表
-   * @param category 分类
-   * @param mediaType 媒体类型
-   * @param page 页码
-   * @param pageSize 每页数量
+   * @param params 查询参数
    * @returns 分页媒体列表
    */
-  queryPersonalMedia: async (
-    category?: string,
-    mediaType?: string,
-    page: number = 1,
-    pageSize: number = 20
-  ): Promise<PaginatedResponse<Media>> => {
-    let queryParams = new URLSearchParams();
+  queryPersonalMedia: async (params: QueryPersonalMediaParams = {}): Promise<PaginatedResponse<PersonalMedia>> => {
+    // 设置默认值
+    const queryParams = {
+      page: params.page || 1,
+      page_size: params.page_size || 10,
+      category: params.category,
+      media_type: params.media_type,
+      start_date: params.start_date,
+      end_date: params.end_date,
+    };
     
-    if (category) queryParams.append('category', category);
-    if (mediaType) queryParams.append('mediaType', mediaType);
-    queryParams.append('page', page.toString());
-    queryParams.append('pageSize', pageSize.toString());
-    
-    return apiClient.get<PaginatedResponse<Media>>(`/personal-media?${queryParams.toString()}`);
+    // 使用POST请求进行分页查询，符合后端API设计
+    const response = await apiClient.post<PaginatedResponse<PersonalMedia>>('/personal-media/page', queryParams);
+    return response;
   },
   
-  /**
-   * 获取单个媒体详情
-   * @param id 媒体ID
-   * @returns 媒体对象
-   */
-  getPersonalMediaById: async (id: number): Promise<Media> => {
-    return apiClient.get<Media>(`/personal-media/${id}`);
-  },
 
-  /**
-   * 更新媒体信息
-   * @param id 媒体ID
-   * @param title 标题
-   * @param description 描述
-   * @param isPrivate 是否私密
-   * @param tags 标签
-   * @returns 更新后的媒体对象
-   */
-  updatePersonalMedia: async (
-    id: number, 
-    title: string, 
-    description: any,
-    isPrivate: boolean = false,
-    tags: string[] = []
-  ): Promise<Media> => {
-    return apiClient.put<Media>(`/personal-media/${id}`, {
-      title,
-      description: JSON.stringify(description),
-      isPrivate,
-      tags
-    });
-  },
 
-  /**
-   * 删除媒体
-   * @param id 媒体ID
-   * @returns void
-   */
-  deletePersonalMedia: async (id: number): Promise<void> => {
-    return apiClient.delete(`/personal-media/${id}`);
-  }
+
+
 }; 

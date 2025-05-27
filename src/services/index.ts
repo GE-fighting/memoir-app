@@ -11,7 +11,7 @@ export { userService } from './user-service';
 export { coupleService } from './couple-service';
 export { eventService } from './event-service';
 export { locationService } from './location-service';
-export { mediaService } from './media-service';
+export { mediaService } from './personal-media-service';
 export { wishlistService } from './wishlist-service';
 export { authService } from './auth-service';
 

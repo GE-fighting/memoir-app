@@ -1,6 +1,5 @@
-import axios from 'axios';
 import OSS from 'ali-oss';
-import { getAuthToken } from '../auth';
+import { apiClient } from '@/services/api-client';
 
 /**
  * Upload file to OSS with progress tracking
@@ -65,26 +64,7 @@ export async function deleteFileFromOSS(client: OSS, objectKey: string): Promise
   }
 }
 
-/**
- * List files by category (已废弃，为了兼容性保留)
- */
-export async function listFilesByCategory(
-  client: OSS,
-  userId: string
-): Promise<OSS.ListObjectResult> {
-  const prefix = `users/${userId}/`;
-    
-  try {
-    // @ts-ignore - ali-oss类型定义可能不准确，实际只需要一个参数
-    return await client.list({
-      prefix,
-      'max-keys': 1000,
-    });
-  } catch (error) {
-    console.error('Error listing files from OSS:', error);
-    throw error;
-  }
-}
+
 
 // OSS客户端类型定义
 export interface OSSClientOptions {
@@ -125,43 +105,30 @@ export interface FileListItem {
   size: number;
   type: string;
   path: string;
+  originalUrl?: string; // 原始未签名的URL，用于需要重新获取签名时使用
+  thumbnail_url?: string; // 缩略图URL，用于视频封面或图片预览
 }
 
 // 获取STS令牌并创建OSS客户端
 export const getOSSClient = async (): Promise<OSS> => {
   try {
-    // 从Memoir API获取STS令牌
-    const token = getAuthToken();
-    const response = await axios.get<STSTokenResponse>("/api/v1/oss/token", {
-      headers: {
-        Authorization: `Bearer ${token}` 
-      }
-    });
-    
-    // 检查响应是否成功
-    if (!response.data) {
-      throw new Error("获取STS令牌失败");
-    }
+    // 使用apiClient获取STS令牌
+    const response = await apiClient.get<STSTokenResponse>("oss/token");
     
     // 使用STS令牌创建OSS客户端
     const client = new OSS({
-      region: "oss-cn-nanjing",
-      accessKeyId: response.data.accessKeyId,
-      accessKeySecret: response.data.accessKeySecret,
-      stsToken: response.data.securityToken,
+      region: "oss-" + response.region,
+      accessKeyId: response.accessKeyId,
+      accessKeySecret: response.accessKeySecret,
+      stsToken: response.securityToken,
       secure: true,
-      bucket: response.data.bucket,
+      bucket: response.bucket,
       refreshSTSToken: async () => {
-        const token = getAuthToken();
-        const refreshToken = await axios.get<STSTokenResponse>("/api/v1/oss/token", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const refreshToken = await apiClient.get<STSTokenResponse>("oss/token");
         return {
-          accessKeyId: refreshToken.data.accessKeyId,
-          accessKeySecret: refreshToken.data.accessKeySecret,
-          stsToken: refreshToken.data.securityToken,
+          accessKeyId: refreshToken.accessKeyId,
+          accessKeySecret: refreshToken.accessKeySecret,
+          stsToken: refreshToken.securityToken,
         };
       },
     });
@@ -173,32 +140,23 @@ export const getOSSClient = async (): Promise<OSS> => {
   }
 };
 
-// 获取当前用户ID (从token中提取或从用户上下文获取)
+// 获取当前用户ID (从localStorage获取)
 export const getCurrentUserId = (): string => {
-  // 从localStorage获取用户ID
-  const userId = localStorage.getItem('userId');
-  if (!userId) {
-    // 尝试从token中提取
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        // JWT token 的格式是 header.payload.signature
-        const payload = token.split('.')[1];
-        const decodedPayload = JSON.parse(atob(payload));
-        if (decodedPayload.sub) {
-          // 找到了用户ID，保存以备将来使用
-          const extractedId = decodedPayload.sub.toString();
-          localStorage.setItem('userId', extractedId);
-          return extractedId;
-        }
-      }
-    } catch (error) {
-      console.error('从token提取用户ID失败:', error);
-    }
+  try {
+    // 从localStorage获取用户ID
+    const userId = typeof localStorage !== 'undefined' ? localStorage.getItem('userId') : null;
+    console.log('getCurrentUserId获取到:', userId);
     
-    throw new Error('未找到用户ID，请重新登录');
+    if (!userId) {
+      // 返回默认值而非抛出错误
+      console.warn('未找到用户ID，使用默认值');
+      return 'user-default';
+    }
+    return userId;
+  } catch (e) {
+    console.error('获取用户ID时出错:', e);
+    return 'user-error';
   }
-  return userId;
 };
 
 // 验证日期是否有效（不是未来日期）
@@ -213,12 +171,20 @@ function validateDate(date: Date): Date {
 }
 
 // 上传文件
-export const uploadFile = async (
-  file: File
-): Promise<UploadResult> => {
+export const uploadFile = async (file: File): Promise<UploadResult> => {
   try {
+    // 调试日志
+    console.log('上传前localStorage中的userId:', localStorage.getItem('userId'));
+    
     const client = await getOSSClient();
-    const userId = getCurrentUserId();
+    let userId;
+    try {
+      userId = getCurrentUserId();
+      console.log('获取到的userId:', userId, typeof userId);
+    } catch (error) {
+      console.error('获取userId出错:', error);
+      userId = 'default'; // 临时使用默认值而非undefined
+    }
     
     // 添加年/月/日的路径结构
     const now = validateDate(new Date());
@@ -392,4 +358,107 @@ export const deleteFile = async (fileUrl: string): Promise<void> => {
     console.error("删除文件失败:", error);
     throw error;
   }
+};
+
+/**
+ * 获取带有授权的OSS对象URL
+ * @param objectUrl 对象的原始URL或对象路径
+ * @param expires 过期时间（秒），默认为3600秒(1小时)
+ * @returns 带有授权的临时访问URL
+ */
+export const getSignedUrl = async (objectUrl: string, expires: number = 3600): Promise<string> => {
+  try {
+    const client = await getOSSClient();
+    let objectName: string;
+    
+    // 检查是否为完整URL或仅为对象路径
+    if (objectUrl.startsWith('http')) {
+      // 从URL中提取对象名称
+      objectName = new URL(objectUrl).pathname.substring(1); // 移除开头的斜杠
+    } else {
+      // 直接使用作为对象路径
+      objectName = objectUrl;
+    }
+    
+    // 检查是否有处理参数
+    if (objectUrl.includes('x-oss-process=')) {
+      const processMatch = objectUrl.match(/x-oss-process=([^&]+)/);
+      const processParam = processMatch ? processMatch[1] : '';
+      
+      if (processParam) {
+        // 将处理参数添加到签名请求中
+        const signedUrl = client.signatureUrl(objectName, {
+          expires,
+          process: decodeURIComponent(processParam),
+          response: {
+            'content-disposition': 'inline'
+          }
+        });
+        return signedUrl;
+      }
+    }
+    
+    // 生成带签名的URL，设置过期时间
+    const signedUrl = client.signatureUrl(objectName, {
+      expires,
+      response: {
+        'content-disposition': 'inline' // 允许在浏览器中直接查看
+      }
+    });
+    
+    return signedUrl;
+  } catch (error) {
+    console.error("获取签名URL失败:", error);
+    throw error;
+  }
+};
+
+/**
+ * 获取媒体缩略图/封面
+ * 图片直接返回原URL，视频生成截帧缩略图
+ * 
+ * @param mediaUrl 媒体的URL
+ * @param mediaType 媒体类型 'video' 或 'image'
+ * @param options 截帧选项
+ * @returns 缩略图URL
+ */
+export const getMediaThumbnail = async (
+  mediaUrl: string, 
+  mediaType: 'video' | 'image',
+  options: {
+    mode?: 'fast';       // 视频：截帧模式，fast为关键帧模式
+  } = {}
+): Promise<string> => {
+  // 图片直接返回原URL
+  if (mediaType === 'image') {
+    return mediaUrl;
+  }
+  
+  // 视频生成缩略图
+  if (mediaType === 'video') {
+    try {
+      // 基本参数：第一帧，宽400px，高300px，JPG格式
+      let process = 'video/snapshot,t_0,f_jpg,w_400,h_300';
+      
+      // 添加快速模式参数
+      if (options.mode === 'fast') {
+        process += ',m_fast';
+      }
+      
+      // 自动旋转
+      process += ',ar_auto';
+      
+      // 生成缩略图URL
+      const baseUrl = mediaUrl.split('?')[0];
+      const thumbnailUrl = `${baseUrl}?x-oss-process=${encodeURIComponent(process)}`;
+      
+      // 直接返回缩略图URL (不再进行签名处理，而是在使用时获取签名)
+      return thumbnailUrl;
+    } catch (error) {
+      console.error("获取视频缩略图失败:", error);
+      throw new Error("无法生成视频缩略图");
+    }
+  }
+  
+  throw new Error(`不支持的媒体类型: ${mediaType}`);
 };

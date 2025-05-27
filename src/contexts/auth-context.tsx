@@ -41,12 +41,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 获取当前用户信息
-        try {
-          const userData = await userService.getCurrentUser();
-          setUser(userData);
-          // 确保用户ID被保存到localStorage
-          localStorage.setItem('userId', userData.id.toString());
-        } catch (error) {
+              try {
+        const userData = await userService.getCurrentUser();
+        setUser(userData);
+        // 确保用户ID被保存到localStorage（始终作为字符串存储，避免大整数精度问题）
+        localStorage.setItem('userId', String(userData.id));
+      } catch (error) {
           // 如果令牌无效，尝试刷新
           const refreshSuccess = await refreshTokens();
           if (!refreshSuccess) {
@@ -75,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await userService.getCurrentUser();
         setUser(userData);
-        // 确保用户ID被保存到localStorage
-        localStorage.setItem('userId', userData.id.toString());
+        // 确保用户ID被保存到localStorage（始终作为字符串存储，避免大整数精度问题）
+        localStorage.setItem('userId', String(userData.id));
         return true;
       } catch {
         return false;
@@ -101,8 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await userService.getCurrentUser();
         setUser(userData);
-        // 保存用户ID到localStorage
-        localStorage.setItem('userId', userData.id.toString());
+        // 保存用户ID到localStorage（始终作为字符串存储，避免大整数精度问题）
+        localStorage.setItem('userId', String(userData.id));
         return true;
       } catch {
         return false;
@@ -133,8 +133,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await userService.getCurrentUser();
         setUser(userData);
-        // 保存用户ID到localStorage
-        localStorage.setItem('userId', userData.id.toString());
+        // 保存用户ID到localStorage（始终作为字符串存储，避免大整数精度问题）
+        localStorage.setItem('userId', String(userData.id));
         return true;
       } catch {
         return false;
