@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from './LanguageContext';
+import LogoutButton from './logout-button';
 
 interface MenuItem {
   path: string;
@@ -111,9 +112,9 @@ export default function Sidebar() {
           </div>
           <div className="user-name">Alex</div>
         </div>
-        <button className="logout-btn">
+        <LogoutButton className="logout-btn">
           <i className="fas fa-sign-out-alt"></i>
-        </button>
+        </LogoutButton>
       </div>
     </div>
   );

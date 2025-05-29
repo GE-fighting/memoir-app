@@ -5,11 +5,12 @@
 
 // 用户相关类型
 export interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   created_at: string;
   updated_at: string;
+  couple_id: string;
 }
 
 export interface UserPreferences {
@@ -20,10 +21,10 @@ export interface UserPreferences {
 
 // 伴侣相关类型
 export interface Couple {
-  id: number;
+  id: string;
   name: string;
   anniversary: string;
-  user_ids: number[];
+  user_ids: string[];
   created_at: string;
   updated_at: string;
 }
@@ -43,17 +44,17 @@ export interface CoupleSettings {
 
 // 时间轴事件相关类型
 export interface TimelineEvent {
-  id: number;
+  id: string;
   title: string;
   description: string;
   event_date: string;
-  location_id?: number;
+  location_id?: string;
   location?: {
     name: string;
     latitude: number;
     longitude: number;
   };
-  media_ids: number[];
+  media_ids: string[];
   tags: string[];
   created_at: string;
   updated_at: string;
@@ -63,8 +64,8 @@ export interface CreateTimelineEventRequest {
   title: string;
   description: string;
   event_date: string;
-  location_id?: number;
-  media_ids?: number[];
+  location_id?: string;
+  media_ids?: string[];
   tags?: string[];
 }
 
@@ -72,14 +73,14 @@ export interface UpdateTimelineEventRequest {
   title?: string;
   description?: string;
   event_date?: string;
-  location_id?: number;
-  media_ids?: number[];
+  location_id?: string;
+  media_ids?: string[];
   tags?: string[];
 }
 
 // 位置相关类型
 export interface Location {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   latitude: number;
@@ -112,7 +113,7 @@ export interface PersonalMedia {
   media_url: string;
   url?: string;
   thumbnail_url?: string;
-  location_id?: number;
+  location_id?: string;
   location?: {
     name: string;
     latitude: number;
@@ -127,7 +128,7 @@ export interface UpdateMediaRequest {
   title?: string;
   description?: string;
   taken_at?: string;
-  location_id?: number;
+  location_id?: string;
   tags?: string[];
 }
 
@@ -139,13 +140,13 @@ export enum WishlistItemStatus {
 }
 
 export interface WishlistItem {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   status: WishlistItemStatus;
   due_date?: string;
   completed_at?: string;
-  created_by: number;
+  created_by: string;
   created_at: string;
   updated_at: string;
 }

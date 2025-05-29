@@ -1,0 +1,26 @@
+/* 添加header-logout-btn样式 */
+.header-logout-btn {
+  margin-right: 10px;
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.header-logout-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #cbd5e0;
+}
+
+.dark .header-logout-btn {
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+.dark .header-logout-btn:hover {
+  background-color: #2d3748;
+  border-color: #4a5568;
+} 

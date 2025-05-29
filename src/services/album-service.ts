@@ -26,6 +26,18 @@ export interface UpdateAlbumRequest {
 }
 
 /**
+ * 相册媒体创建请求参数
+ */
+export interface CreateAlbumMediaParams {
+  album_id: string;
+  media_type: 'photo' | 'video';
+  title?: string;
+  media_url: string;
+  thumbnail_url: string;
+  description?: string;
+}
+
+/**
  * 相册服务类
  * 提供相册相关的API调用
  */
@@ -81,6 +93,23 @@ class AlbumService {
    */
   async deleteAlbum(id: string): Promise<void> {
     return apiClient.delete<void>(`/albums/${id}`);
+  }
+  
+  /**
+   * 获取相册上传STS令牌
+   * @returns STS令牌
+   */
+  async getAlbumSTSToken(): Promise<any> {
+    return apiClient.get<any>('/couple/sts');
+  }
+  
+  /**
+   * 上传媒体到相册
+   * @param params 媒体参数
+   * @returns 上传结果
+   */
+  async uploadMediaToAlbum(params: CreateAlbumMediaParams): Promise<any> {
+    return apiClient.post<any>('/albums/media', params);
   }
 }
 

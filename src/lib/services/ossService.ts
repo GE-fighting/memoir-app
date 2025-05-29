@@ -16,18 +16,31 @@ export async function uploadFileToOSS(
       'Cache-Control': 'max-age=31536000',
     };
     
-    // Use multipart upload for better performance and progress tracking
-    const result = await client.multipartUpload(objectKey, file, {
-      progress: (p) => {
-        // Progress percentage
-        const percent = Math.floor(p * 100);
-        onProgress?.(percent);
-      },
-      headers,
+    // 使用简单上传方法替代分片上传
+    // 注意：简单上传方法不支持进度回调，如果需要进度回调，仍需使用multipartUpload
+    // 如果需要进度回调，可以模拟进度或保留使用multipartUpload
+    if (onProgress) {
+      // 模拟上传开始
+      onProgress(0);
+    }
+    
+    const result = await client.put(objectKey, file, {
+      headers
     });
     
-    // Return the URL of the uploaded file
-    return client.signatureUrl(objectKey);
+    if (onProgress) {
+      // 模拟上传完成
+      onProgress(100);
+    }
+    
+    // 返回上传后的URL
+    // 确保URL使用HTTPS协议
+    let url = result.url;
+    if (url && url.startsWith('http:')) {
+      url = url.replace('http:', 'https:');
+    }
+    
+    return url;
   } catch (error) {
     console.error('Error uploading file to OSS:', error);
     throw error;

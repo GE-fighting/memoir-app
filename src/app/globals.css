@@ -6,6 +6,12 @@
 /* 导入Tailwind的功能类，用于直接在HTML元素中应用样式 */
 @tailwind utilities;
 
+/* 导入自定义样式文件 */
+@import '../styles/layout.css';
+@import '../styles/modal.css';
+@import '../styles/albums.css';
+@import '../styles/upload.css';
+
 /* 全局CSS变量定义，用于主题颜色和样式一致性 */
 :root {
   --primary: #6a7bd9;

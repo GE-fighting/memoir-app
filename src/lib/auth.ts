@@ -30,14 +30,19 @@ export const clearAuth = (): void => {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('userId');
+  localStorage.removeItem('coupleID');
 };
 
 /**
  * 保存用户ID到本地存储
  * @param userId 用户ID
+ * @param coupleID 情侣ID
  */
-export const saveUserId = (userId: string): void => {
+export const saveUserId = (userId: string, coupleID?: string): void => {
   localStorage.setItem('userId', userId);
+  if (coupleID) {
+    localStorage.setItem('coupleID', coupleID);
+  }
 };
 
 /**

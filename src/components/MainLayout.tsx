@@ -9,6 +9,7 @@
 import React, { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import { LanguageSwitcher, T, useLanguage } from './LanguageContext';
+import LogoutButton from './logout-button';
 
 /**
  * 主布局组件属性接口
@@ -58,6 +59,12 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
               <i className="far fa-bell"></i>
               <span className="badge">2</span>
             </div>
+            
+            {/* 登出按钮 */}
+            <LogoutButton className="header-logout-btn">
+              <i className="fas fa-sign-out-alt mr-2"></i>
+              <T zh="退出" en="Logout" />
+            </LogoutButton>
             
             {/* 新建按钮，使用T组件实现多语言 */}
             <button className="btn btn-primary">

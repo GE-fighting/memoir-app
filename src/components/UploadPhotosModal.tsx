@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { T, useLanguage } from './LanguageContext';
+import { useAlbumUpload } from '@/lib/hooks/useAlbumUpload';
 
 interface UploadPhotosModalProps {
   isOpen: boolean;
@@ -19,15 +20,37 @@ export default function UploadPhotosModal({
   albumTitle 
 }: UploadPhotosModalProps) {
   const { language } = useLanguage();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 使用相册上传hook
+  const { 
+    uploadFiles, 
+    cancelUpload, 
+    status, 
+    progress, 
+    error 
+  } = useAlbumUpload(albumId);
+  
+  // 上传状态是否为上传中
+  const isLoading = status === 'uploading';
+  
+  // 根据状态更新UI
+  useEffect(() => {
+    // 上传成功后关闭模态框
+    if (status === 'success') {
+      setTimeout(() => {
+        setSelectedFiles([]);
+        setPreviewUrls([]);
+        onSuccess();
+      }, 1000);
+    }
+  }, [status, onSuccess]);
 
   // 如果模态框不是打开状态，不渲染任何内容
   if (!isOpen) return null;
-
+  
   // 处理文件选择
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -55,40 +78,35 @@ export default function UploadPhotosModal({
     e.preventDefault();
     
     if (selectedFiles.length === 0) {
-      setError(language === 'zh' ? '请选择至少一张照片' : 'Please select at least one photo');
       return;
     }
 
     try {
-      setIsLoading(true);
-      setError('');
-      
-      // TODO: 实现文件上传逻辑
-      // 这里可以使用FormData来上传文件到服务器
-      const formData = new FormData();
-      formData.append('album_id', albumId);
-      
-      selectedFiles.forEach(file => {
-        formData.append('files', file);
-      });
-      
-      // 模拟上传延迟
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // 成功后重置状态并关闭模态框
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-      onSuccess();
-      onClose();
-    } catch (err: any) {
-      // 显示错误信息
-      setError(
-        err.response?.data?.message || 
-        (language === 'zh' ? '上传照片失败，请稍后重试' : 'Failed to upload photos, please try again later')
-      );
-    } finally {
-      setIsLoading(false);
+      // 上传文件到相册
+      await uploadFiles(selectedFiles);
+    } catch (err) {
+      console.error('上传错误:', err);
     }
+  };
+  
+  // 处理取消
+  const handleCancel = () => {
+    if (isLoading) {
+      cancelUpload();
+    }
+    
+    // 清理预览URL
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    setSelectedFiles([]);
+    setPreviewUrls([]);
+    onClose();
+  };
+  
+  // 获取文件上传进度
+  const getFileProgress = (index: number): number => {
+    const fileIds = Object.keys(progress);
+    if (fileIds.length <= index) return 0;
+    return progress[fileIds[index]] || 0;
   };
 
   return (
@@ -101,14 +119,14 @@ export default function UploadPhotosModal({
               en={`Upload Photos to "${albumTitle}"`}
             />
           </h2>
-          <button className="close-button" onClick={onClose}>
+          <button className="close-button" onClick={handleCancel}>
             <i className="fas fa-times"></i>
           </button>
         </div>
         
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
-            {error && <div className="error-message">{error}</div>}
+            {error && <div className="error-message">{error.message}</div>}
             
             <div className="upload-area">
               <input
@@ -118,12 +136,14 @@ export default function UploadPhotosModal({
                 accept="image/*"
                 multiple
                 style={{ display: 'none' }}
+                disabled={isLoading}
               />
               
               <button
                 type="button"
                 className="upload-button"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
               >
                 <i className="fas fa-cloud-upload-alt"></i>
                 <span>
@@ -151,11 +171,21 @@ export default function UploadPhotosModal({
                   {previewUrls.map((url, index) => (
                     <div className="preview-item" key={index}>
                       <img src={url} alt={`Preview ${index + 1}`} />
+                      {isLoading && (
+                        <div className="upload-progress">
+                          <div 
+                            className="progress-bar" 
+                            style={{ width: `${getFileProgress(index)}%` }}
+                          ></div>
+                          <span className="progress-text">{getFileProgress(index)}%</span>
+                        </div>
+                      )}
                       <button
                         type="button"
                         className="remove-button"
                         onClick={() => removeFile(index)}
                         title={language === 'zh' ? '移除' : 'Remove'}
+                        disabled={isLoading}
                       >
                         <i className="fas fa-times"></i>
                       </button>
@@ -170,7 +200,7 @@ export default function UploadPhotosModal({
             <button 
               type="button" 
               className="btn btn-secondary" 
-              onClick={onClose}
+              onClick={handleCancel}
               disabled={isLoading}
             >
               <T zh="取消" en="Cancel" />

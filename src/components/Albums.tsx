@@ -89,8 +89,11 @@ export default function Albums() {
   
   // 上传照片成功后的回调
   const handlePhotosUploaded = () => {
-    // 重新加载相册列表以更新照片数量
-    loadAlbums();
+    // 关闭上传模态框
+    setIsUploadModalOpen(false);
+    
+    // 不再每次上传后都重新加载所有相册
+    // 可以在需要查看相册详情时再加载最新数据
   };
   
   // 处理编辑相册按钮点击
