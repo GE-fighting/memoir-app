@@ -43,7 +43,9 @@ export const mediaService = {
    * @returns 媒体列表
    */
   getMediaList: async (params?: PageParams): Promise<PaginatedResponse<PersonalMedia>> => {
-    return apiClient.post<PaginatedResponse<PersonalMedia>>("/personal-media/page", { params });
+    return apiClient.get<PaginatedResponse<PersonalMedia>>("/personal-media/page", { 
+      params: params 
+    });
   },
 
   /**
@@ -156,7 +158,7 @@ export const mediaService = {
    * @returns 创建的媒体对象
    */
   createPersonalMediaWithURL: async (params: CreatePersonalMediaWithURLParams): Promise<PersonalMedia> => {
-    return apiClient.post<PersonalMedia>('/personal-media/url', params);
+    return apiClient.post<PersonalMedia>('/personal-media/create', params);
   },
 
   /**
@@ -175,9 +177,10 @@ export const mediaService = {
       end_date: params.end_date,
     };
     
-    // 使用POST请求进行分页查询，符合后端API设计
-    const response = await apiClient.post<PaginatedResponse<PersonalMedia>>('/personal-media/page', queryParams);
-    return response;
+    // 使用GET请求进行分页查询，符合后端API设计
+    return apiClient.get<PaginatedResponse<PersonalMedia>>('/personal-media/page', { 
+      params: queryParams 
+    });
   },
   
 

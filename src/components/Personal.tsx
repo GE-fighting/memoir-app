@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import MediaUpload from '@/components/MediaUpload';
 import { T, useLanguage } from './LanguageContext';
 import { FileListItem, getSignedUrl } from '@/lib/services/ossService';
-import { QueryPersonalMediaParams } from '@/services/personal-media-service';
+import { mediaService, QueryPersonalMediaParams } from '@/services/personal-media-service';
 
 export default function Personal() {
   const { language } = useLanguage();
@@ -21,9 +21,7 @@ export default function Personal() {
       setLoading(true);
       setError(null);
       
-      // 导入媒体服务
-      const { mediaService } = await import('@/services/personal-media-service');
-      
+  
       // 设置查询参数
       const params: QueryPersonalMediaParams = {
         media_type: activeTab === 'photos' ? 'photo' : activeTab === 'videos' ? 'video' : undefined
