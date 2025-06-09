@@ -65,7 +65,7 @@ class AlbumService {
    * @returns 包含照片的相册详情
    */
   async getAlbumWithPhotos(id: string): Promise<Album> {
-    return apiClient.get<Album>(`/albums/${id}/photos`);
+    return apiClient.get<Album>(`/albums/photos?id=${id}`);
   }
 
   /**

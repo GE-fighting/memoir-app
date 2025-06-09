@@ -22,10 +22,10 @@ export default function Account() {
   }, []);
   
   return (
-    <div className="account-grid">
-      <div className="card">
+    <div className="account-container">
+      <div className="account-card">
         <h2 className="card-title">
-          <T zh="我们的信息" en="Our Information" />
+          <T zh="爱的记忆" en="Love Story" />
         </h2>
         <div className="couple-info">
           <div className="couple-avatar-group">
@@ -43,70 +43,152 @@ export default function Account() {
             </div>
           </div>
         </div>
-        <div className="form-group">
-          <label><T zh="缘定之日" en="Anniversary Date" /></label>
-          <input type="date" defaultValue="2021-08-18" />
-        </div>
-        <div className="form-group">
-          <label><T zh="Destin密钥" en="Destin Key" /></label>
-          <input type="text" defaultValue="LOVE-ALEX-JAMIE-2021" readOnly />
-
-        </div>
-        {!hasCouple && (
-          <button className="btn btn-primary">
-            <i className="fas fa-save"></i>
-            <T zh="步入爱河" en="Save Changes" />
-          </button>
-        )}
-      </div>
-
-      <div className="card">
-        <h2 className="card-title">
-          <T zh="存储与数据" en="Storage & Data" />
-        </h2>
-        <div className="storage-info">
-          <div className="storage-bar">
-            <div className="storage-progress"></div>
+        
+        <div className="form-section">
+          <div className="form-group">
+            <label><T zh="缘定之日" en="Anniversary Date" /></label>
+            <input type="date" defaultValue="2021-08-18" className="form-input" />
           </div>
-          <div className="storage-details">
-            <div><T zh="已使用 3.5 GB" en="Using 3.5 GB" /></div>
-            <div><T zh="共 10 GB" en="of 10 GB" /></div>
+          
+          <div className="form-group">
+            <label><T zh="Destin密钥" en="Destin Key" /></label>
+            <input type="text" defaultValue="LOVE-ALEX-JAMIE-2021" readOnly className="form-input" />
           </div>
-          <div className="storage-breakdown">
-            <div className="storage-item">
-              <div className="storage-item-label">
-                <div className="storage-color purple"></div>
-                <div><T zh="时间轴媒体" en="Timeline Media" /></div>
-              </div>
-              <div>1.2 GB</div>
-            </div>
-            <div className="storage-item">
-              <div className="storage-item-label">
-                <div className="storage-color orange"></div>
-                <div><T zh="相册照片和视频" en="Album Photos & Videos" /></div>
-              </div>
-              <div>2.1 GB</div>
-            </div>
-            <div className="storage-item">
-              <div className="storage-item-label">
-                <div className="storage-color blue"></div>
-                <div><T zh="回忆视频" en="Memory Videos" /></div>
-              </div>
-              <div>0.2 GB</div>
-            </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-          <button className="btn btn-outline">
-            <i className="fas fa-download"></i>
-            <T zh="导出数据" en="Export Data" />
-          </button>
-          <button className="btn btn-outline">
-            <i className="fas fa-arrow-up"></i>
-            <T zh="升级存储" en="Upgrade Storage" />
-          </button>
+          
+          {!hasCouple && (
+            <button className="btn btn-primary">
+              <i className="fas fa-save"></i>
+              <T zh="步入爱河" en="Save Changes" />
+            </button>
+          )}
         </div>
       </div>
+      
+      <style jsx>{`
+        .account-container {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          padding: 20px;
+        }
+        
+        .account-card {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+          padding: 24px;
+          width: 100%;
+          max-width: 500px;
+        }
+        
+        .card-title {
+          font-size: 1.5rem;
+          margin-bottom: 20px;
+          color: #333;
+          text-align: center;
+          font-weight: 600;
+        }
+        
+        .couple-info {
+          display: flex;
+          align-items: center;
+          margin-bottom: 24px;
+          justify-content: center;
+        }
+        
+        .couple-avatar-group {
+          display: flex;
+          margin-right: 15px;
+        }
+        
+        .couple-avatar {
+          width: 45px;
+          height: 45px;
+          border-radius: 50%;
+          background: #6c5ce7;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          font-weight: bold;
+          margin-right: -10px;
+          border: 2px solid white;
+        }
+        
+        .couple-avatar:last-child {
+          background: #fd79a8;
+          margin-right: 0;
+        }
+        
+        .couple-details {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .couple-name {
+          font-weight: 600;
+          font-size: 18px;
+        }
+        
+        .couple-date {
+          font-size: 14px;
+          color: #666;
+        }
+        
+        .couple-date i {
+          color: #fd79a8;
+          margin-right: 5px;
+        }
+        
+        .form-section {
+          border-top: 1px solid #eee;
+          padding-top: 20px;
+        }
+        
+        .form-group {
+          margin-bottom: 16px;
+        }
+        
+        .form-group label {
+          display: block;
+          margin-bottom: 6px;
+          font-size: 14px;
+          color: #555;
+        }
+        
+        .form-input {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 14px;
+        }
+        
+        .btn {
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+          width: 100%;
+          margin-top: 20px;
+        }
+        
+        .btn-primary {
+          background: #6c5ce7;
+          color: white;
+        }
+        
+        .btn-primary:hover {
+          background: #5b4ecc;
+        }
+      `}</style>
     </div>
   );
 } 

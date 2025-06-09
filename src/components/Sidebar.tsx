@@ -61,15 +61,9 @@ const menuItems: MenuItem[] = [
   },
   {
     path: '/account',
-    icon: 'fas fa-user-heart',
-    labelZh: '我们的账户',
-    labelEn: 'Our Account'
-  },
-  {
-    path: '/settings',
     icon: 'fas fa-gear',
-    labelZh: '设置',
-    labelEn: 'Settings'
+    labelZh: '账户设置',
+    labelEn: 'Account Settings'
   }
 ];
 

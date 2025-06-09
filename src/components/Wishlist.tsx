@@ -7,207 +7,321 @@ interface WishItem {
   id: number;
   title: string;
   description: string;
-  status: 'wishlist' | 'planned' | 'completed';
-  priority: 'high' | 'medium' | 'low';
-  image: string;
+  completed: boolean;
+  category: 'travel' | 'promise';
   date?: string;
 }
 
 export default function Wishlist() {
   const { language } = useLanguage();
-  const [showTravelModal, setShowTravelModal] = useState(false);
-  const [showPromiseModal, setShowPromiseModal] = useState(false);
-  
-  // 示例数据 - 在实际应用中，这些数据应该来自API或状态管理库
-  const travelDreams: WishItem[] = [
+  const [newWishText, setNewWishText] = useState('');
+  const [activeCategory, setActiveCategory] = useState<'travel' | 'promise'>('travel');
+  const [wishlist, setWishlist] = useState<WishItem[]>([
     {
       id: 1,
       title: language === 'zh' ? '巴黎之旅' : 'Trip to Paris',
       description: language === 'zh' ? '参观埃菲尔铁塔，在塞纳河畔漫步，品尝正宗的法国美食。' : 'Visit the Eiffel Tower, stroll along the Seine, and taste authentic French cuisine.',
-      status: 'wishlist',
-      priority: 'high',
-      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cGFyaXN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=600&q=60'
+      completed: false,
+      category: 'travel'
     },
     {
       id: 2,
       title: language === 'zh' ? '马尔代夫度假' : 'Maldives Vacation',
       description: language === 'zh' ? '在水上别墅度过浪漫的一周，浮潜，欣赏日落。' : 'Spend a romantic week in an overwater villa, snorkeling, and watching sunsets.',
-      status: 'planned',
-      date: '2023-12-15',
-      priority: 'medium',
-      image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bWFsZGl2ZXN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=600&q=60'
-    }
-  ];
-  
-  const lovePromises: WishItem[] = [
+      completed: false,
+      category: 'travel',
+      date: '2023-12-15'
+    },
     {
       id: 3,
       title: language === 'zh' ? '学习一项新技能' : 'Learn a New Skill Together',
       description: language === 'zh' ? '一起报名烹饪课程，学习制作我们最喜欢的菜肴。' : 'Sign up for cooking classes and learn to make our favorite dishes.',
-      status: 'completed',
-      date: '2023-08-10',
-      priority: 'medium',
-      image: 'https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Y29va2luZyUyMGNsYXNzfGVufDB8fDB8fHww&auto=format&fit=crop&w=600&q=60'
+      completed: true,
+      category: 'promise',
+      date: '2023-08-10'
     },
     {
       id: 4,
       title: language === 'zh' ? '观星夜晚' : 'Stargazing Night',
       description: language === 'zh' ? '带上望远镜和毯子，去郊外找一个安静的地方观星。' : 'Take a telescope and blankets, find a quiet spot in the countryside to watch the stars.',
-      status: 'wishlist',
-      priority: 'low',
-      image: 'https://images.unsplash.com/photo-1532978379173-523e16f371f9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8c3RhcmdhemluZ3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=600&q=60'
+      completed: false,
+      category: 'promise'
     }
-  ];
-  
-  const getStatusIcon = (status: string) => {
-    switch(status) {
-      case 'completed': return <i className="fas fa-check"></i>;
-      case 'planned': return <i className="fas fa-calendar-check"></i>;
-      default: return <i className="fas fa-star"></i>;
-    }
+  ]);
+
+  const toggleComplete = (id: number) => {
+    setWishlist(wishlist.map(wish => 
+      wish.id === id ? { ...wish, completed: !wish.completed } : wish
+    ));
   };
+
+  const addNewWish = () => {
+    if (newWishText.trim() === '') return;
+    
+    const newWish: WishItem = {
+      id: Date.now(),
+      title: newWishText,
+      description: '',
+      completed: false,
+      category: activeCategory
+    };
+    
+    setWishlist([...wishlist, newWish]);
+    setNewWishText('');
+  };
+
+  const deleteWish = (id: number) => {
+    setWishlist(wishlist.filter(wish => wish.id !== id));
+  };
+
+  const filteredWishes = wishlist.filter(wish => wish.category === activeCategory);
   
   return (
-    <div className="wishlist-container">
-      {/* 旅行梦想部分 */}
-      <div className="wishlist-section">
-        <div className="wishlist-header">
-          <div className="wishlist-title">
-            <i className="fas fa-map-marked-alt"></i>
-            <h2><T zh="旅行梦想" en="Travel Dreams" /></h2>
-          </div>
-          <button className="btn btn-primary" onClick={() => setShowTravelModal(true)}>
-            <i className="fas fa-plus"></i>
-            <T zh="添加梦想" en="Add Dream" />
-          </button>
-        </div>
-        
-        <div className="wishlist-grid">
-          {travelDreams.map(dream => (
-            <div className="wishlist-card" key={dream.id}>
-              <div className={`wishlist-card-status ${dream.status}`}>
-                {getStatusIcon(dream.status)}
-              </div>
-              <div className="wishlist-card-image">
-                <img src={dream.image} alt={dream.title} />
-              </div>
-              <div className="wishlist-card-content">
-                <div className="wishlist-card-title">{dream.title}</div>
-                <div className="wishlist-card-desc">{dream.description}</div>
-                <div className="wishlist-card-meta">
-                  {dream.date ? (
-                    <div className={`wishlist-date ${dream.status}`}>
-                      <i className="fas fa-calendar"></i>
-                      {dream.date}
-                    </div>
-                  ) : (
-                    <div className={`wishlist-priority ${dream.priority}`}>
-                      <i className="fas fa-flag"></i>
-                      <T 
-                        zh={dream.priority === 'high' ? '高' : dream.priority === 'medium' ? '中' : '低'} 
-                        en={dream.priority === 'high' ? 'High' : dream.priority === 'medium' ? 'Medium' : 'Low'} 
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="wishlist-card-actions">
-                <button className="wishlist-action-btn">
-                  <i className="fas fa-edit"></i>
-                </button>
-                <button className="wishlist-action-btn">
-                  <i className="fas fa-trash"></i>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="wish-container">
+      <div className="category-tabs">
+        <button 
+          className={`category-tab ${activeCategory === 'travel' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('travel')}
+        >
+          <i className="fas fa-map-marked-alt"></i>
+          <span><T zh="旅行梦想" en="Travel Dreams" /></span>
+        </button>
+        <button 
+          className={`category-tab ${activeCategory === 'promise' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('promise')}
+        >
+          <i className="fas fa-hands-holding-heart"></i>
+          <span><T zh="共赴之约" en="Love Promises" /></span>
+        </button>
       </div>
-      
-      {/* 爱的约定部分 */}
-      <div className="wishlist-section">
-        <div className="wishlist-header">
-          <div className="wishlist-title">
-            <i className="fas fa-hands-holding-heart"></i>
-            <h2><T zh="共赴之约" en="Love Promises" /></h2>
-          </div>
-          <button className="btn btn-primary" onClick={() => setShowPromiseModal(true)}>
-            <i className="fas fa-plus"></i>
-            <T zh="添加约定" en="Add Promise" />
-          </button>
-        </div>
-        
-        <div className="wishlist-grid">
-          {lovePromises.map(promise => (
-            <div className="wishlist-card" key={promise.id}>
-              <div className={`wishlist-card-status ${promise.status}`}>
-                {getStatusIcon(promise.status)}
-              </div>
-              <div className="wishlist-card-image">
-                <img src={promise.image} alt={promise.title} />
-              </div>
-              <div className="wishlist-card-content">
-                <div className="wishlist-card-title">{promise.title}</div>
-                <div className="wishlist-card-desc">{promise.description}</div>
-                <div className="wishlist-card-meta">
-                  {promise.date ? (
-                    <div className={`wishlist-date ${promise.status}`}>
-                      <i className="fas fa-calendar"></i>
-                      {promise.date}
-                    </div>
-                  ) : (
-                    <div className={`wishlist-priority ${promise.priority}`}>
-                      <i className="fas fa-flag"></i>
-                      <T 
-                        zh={promise.priority === 'high' ? '高' : promise.priority === 'medium' ? '中' : '低'} 
-                        en={promise.priority === 'high' ? 'High' : promise.priority === 'medium' ? 'Medium' : 'Low'} 
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="wishlist-card-actions">
-                <button className="wishlist-action-btn">
-                  <i className="fas fa-edit"></i>
-                </button>
-                <button className="wishlist-action-btn">
-                  <i className="fas fa-trash"></i>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+
+      <div className="wish-add-form">
+        <input
+          type="text"
+          value={newWishText}
+          onChange={(e) => setNewWishText(e.target.value)}
+          placeholder={language === 'zh' ? '添加新心愿...' : 'Add new wish...'}
+          className="wish-input"
+        />
+        <button className="wish-add-btn" onClick={addNewWish}>
+          <i className="fas fa-plus"></i>
+          <T zh="添加" en="Add" />
+        </button>
       </div>
-      
-      {/* 添加旅行梦想模态框 - 实际应用中应该用更好的模态框组件 */}
-      {showTravelModal && (
-        <div className="wishlist-modal show">
-          <div className="wishlist-modal-container">
-            <button className="wishlist-modal-close" onClick={() => setShowTravelModal(false)}>
-              <i className="fas fa-times"></i>
-            </button>
-            <h3 className="wishlist-modal-title">
-              <T zh="添加旅行梦想" en="Add Travel Dream" />
-            </h3>
-            {/* 表单内容省略 */}
+
+      <div className="wish-list">
+        {filteredWishes.length === 0 ? (
+          <div className="empty-state">
+            <i className="fas fa-heart"></i>
+            <p><T zh="还没有心愿，添加一个吧！" en="No wishes yet, add one!" /></p>
           </div>
-        </div>
-      )}
-      
-      {/* 添加爱的约定模态框 */}
-      {showPromiseModal && (
-        <div className="wishlist-modal show">
-          <div className="wishlist-modal-container">
-            <button className="wishlist-modal-close" onClick={() => setShowPromiseModal(false)}>
-              <i className="fas fa-times"></i>
-            </button>
-            <h3 className="wishlist-modal-title">
-              <T zh="添加共赴之约" en="Add Love Promise" />
-            </h3>
-            {/* 表单内容省略 */}
-          </div>
-        </div>
-      )}
+        ) : (
+          filteredWishes.map(wish => (
+            <div className={`wish-item ${wish.completed ? 'completed' : ''}`} key={wish.id}>
+              <div className="wish-checkbox" onClick={() => toggleComplete(wish.id)}>
+                {wish.completed ? <i className="fas fa-check"></i> : null}
+              </div>
+              <div className="wish-content">
+                <h3 className="wish-title">{wish.title}</h3>
+                {wish.description && <p className="wish-description">{wish.description}</p>}
+                {wish.date && (
+                  <div className="wish-date">
+                    <i className="fas fa-calendar"></i>
+                    <span>{wish.date}</span>
+                  </div>
+                )}
+              </div>
+              <button className="wish-delete" onClick={() => deleteWish(wish.id)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <style jsx>{`
+        .wish-container {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+
+        .category-tabs {
+          display: flex;
+          margin-bottom: 24px;
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .category-tab {
+          flex: 1;
+          padding: 16px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          color: #666;
+          transition: all 0.3s ease;
+        }
+
+        .category-tab.active {
+          background: #6c5ce7;
+          color: white;
+        }
+
+        .category-tab i {
+          font-size: 18px;
+        }
+
+        .wish-add-form {
+          display: flex;
+          margin-bottom: 24px;
+          gap: 12px;
+        }
+
+        .wish-input {
+          flex: 1;
+          padding: 14px 16px;
+          border: 1px solid #e1e1e1;
+          border-radius: 8px;
+          font-size: 16px;
+          transition: border 0.3s ease;
+        }
+
+        .wish-input:focus {
+          outline: none;
+          border-color: #6c5ce7;
+        }
+
+        .wish-add-btn {
+          background: #6c5ce7;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 0 24px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: background 0.3s ease;
+        }
+
+        .wish-add-btn:hover {
+          background: #5b4ecc;
+        }
+
+        .wish-list {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .wish-item {
+          display: flex;
+          align-items: flex-start;
+          padding: 16px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          transition: all 0.3s ease;
+        }
+
+        .wish-item.completed {
+          background: #f8f9fa;
+        }
+
+        .wish-item.completed .wish-title,
+        .wish-item.completed .wish-description {
+          text-decoration: line-through;
+          color: #adb5bd;
+        }
+
+        .wish-checkbox {
+          width: 24px;
+          height: 24px;
+          border: 2px solid #6c5ce7;
+          border-radius: 50%;
+          margin-right: 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          color: white;
+          background: transparent;
+          transition: all 0.2s ease;
+        }
+
+        .wish-item.completed .wish-checkbox {
+          background: #6c5ce7;
+        }
+
+        .wish-content {
+          flex: 1;
+        }
+
+        .wish-title {
+          font-size: 18px;
+          font-weight: 500;
+          margin: 0 0 8px 0;
+          color: #333;
+        }
+
+        .wish-description {
+          font-size: 14px;
+          color: #666;
+          margin: 0 0 12px 0;
+          line-height: 1.5;
+        }
+
+        .wish-date {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #888;
+        }
+
+        .wish-delete {
+          background: none;
+          border: none;
+          color: #ccc;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+
+        .wish-delete:hover {
+          color: #ff6b6b;
+          background: #fff0f0;
+        }
+
+        .empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 48px 0;
+          color: #adb5bd;
+          text-align: center;
+        }
+
+        .empty-state i {
+          font-size: 48px;
+          margin-bottom: 16px;
+          color: #e9ecef;
+        }
+      `}</style>
     </div>
   );
 } 

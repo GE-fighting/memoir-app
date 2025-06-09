@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MediaUpload from '@/components/MediaUpload';
 import { T, useLanguage } from './LanguageContext';
 import { FileListItem, getSignedUrl } from '@/lib/services/ossService';
@@ -14,6 +14,8 @@ export default function Personal() {
   const [mediaFiles, setMediaFiles] = useState<FileListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentVideo, setCurrentVideo] = useState<FileListItem | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   // 加载文件列表
   const loadMediaFiles = async () => {
@@ -111,6 +113,27 @@ export default function Personal() {
     setShowUploadModal(false);
   };
   
+  // 播放视频
+  const playVideo = (file: FileListItem) => {
+    setCurrentVideo(file);
+    // 当视频模态框打开时，自动播放视频
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(err => {
+          console.error('自动播放视频失败:', err);
+        });
+      }
+    }, 100);
+  };
+  
+  // 关闭视频模态框
+  const closeVideoModal = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+    setCurrentVideo(null);
+  };
+  
   // 搜索过滤
   const filteredMedia = searchTerm 
     ? mediaFiles.filter(file => 
@@ -146,6 +169,30 @@ export default function Personal() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-3xl mx-4">
             <MediaUpload onClose={handleUploadComplete} />
+          </div>
+        </div>
+      )}
+
+      {/* Video Player Modal */}
+      {currentVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" onClick={closeVideoModal}>
+          <div className="relative w-full max-w-4xl p-2" onClick={e => e.stopPropagation()}>
+            <div className="video-player-container">
+              <video 
+                ref={videoRef}
+                src={currentVideo.url} 
+                controls 
+                className="w-full h-auto rounded-lg shadow-xl"
+                controlsList="nodownload"
+              />
+              <button 
+                className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-70"
+                onClick={closeVideoModal}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+              <h3 className="text-white text-lg font-medium mt-4">{currentVideo.name}</h3>
+            </div>
           </div>
         </div>
       )}
@@ -214,7 +261,7 @@ export default function Personal() {
                   </div>
                 </div>
               ) : (
-                <div className="video-container">
+                <div className="video-container" onClick={() => playVideo(file)}>
                   <div className="video-thumbnail">
                     <img 
                       src={file.thumbnail_url || `https://placehold.co/600x400/666/fff?text=Video`} 
@@ -226,15 +273,138 @@ export default function Personal() {
                     </div>
                   </div>
                   <div className="media-actions">
-                    <button className="media-action-btn"><i className="fas fa-edit"></i></button>
-                    <button className="media-action-btn"><i className="fas fa-trash"></i></button>
+                    <button 
+                      className="media-action-btn" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // 编辑功能
+                      }}
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      className="media-action-btn" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // 删除功能
+                      }}
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
                   </div>
                 </div>
               )}
+              <div className="media-title">{file.name}</div>
             </div>
           ))}
         </div>
       )}
+
+      <style jsx>{`
+        .media-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+          margin-top: 20px;
+        }
+
+        .media-item {
+          position: relative;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          background: white;
+        }
+
+        .image-container, .video-container {
+          position: relative;
+          aspect-ratio: 16/9;
+          overflow: hidden;
+          cursor: pointer;
+        }
+
+        .media-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .image-container:hover .media-image,
+        .video-container:hover .media-image {
+          transform: scale(1.05);
+        }
+
+        .play-icon {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 50px;
+          height: 50px;
+          background: rgba(0,0,0,0.5);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 20px;
+          transition: all 0.3s ease;
+        }
+
+        .video-container:hover .play-icon {
+          background: rgba(108, 92, 231, 0.8);
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .media-actions {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          display: flex;
+          gap: 4px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .image-container:hover .media-actions,
+        .video-container:hover .media-actions {
+          opacity: 1;
+        }
+
+        .media-action-btn {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.8);
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #333;
+          transition: all 0.2s ease;
+        }
+
+        .media-action-btn:hover {
+          background: white;
+          color: #6c5ce7;
+        }
+
+        .media-title {
+          padding: 10px;
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-align: center;
+        }
+
+        .video-player-container {
+          position: relative;
+          width: 100%;
+        }
+      `}</style>
     </>
   );
 } 
