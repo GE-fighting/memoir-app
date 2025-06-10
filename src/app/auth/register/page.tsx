@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const { register: registerUser } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const currentYear = new Date().getFullYear();
 
   const {
     register,
@@ -96,7 +97,7 @@ export default function RegisterPage() {
             </div>
           </motion.div>
           <div className="mt-8 text-xs opacity-60">
-            <p>© 2024 Memoir · 美好时刻，永久珍藏</p>
+            <p>© {currentYear} Memoir · 美好时刻，永久珍藏</p>
           </div>
         </div>
 

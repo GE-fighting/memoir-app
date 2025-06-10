@@ -265,29 +265,34 @@ input:focus, select:focus, textarea:focus {
 
   /* 语言切换器样式 */
   .language-switch {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 100;
-    background-color: white;
-    border-radius: 30px;
-    padding: 5px;
-    box-shadow: var(--shadow);
+    position: relative;
+    background-color: transparent;
+    border-radius: 20px;
+    padding: 0 5px;
     display: flex;
     align-items: center;
+    margin-right: 15px;
+    border: 1px solid var(--gray);
   }
 
   .language-btn {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
+    padding: 3px 8px;
+    border-radius: 16px;
+    font-size: 0.8rem;
     font-weight: 500;
     transition: var(--transition);
+    background: transparent;
+    color: var(--gray-dark);
   }
 
   .language-btn.active {
     background-color: var(--primary);
     color: white;
+  }
+  
+  .language-divider {
+    color: var(--gray);
+    font-size: 0.8rem;
   }
 
   /* 仪表盘样式 */

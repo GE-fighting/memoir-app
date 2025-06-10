@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from './LanguageContext';
+import { useAuth } from '@/contexts/auth-context';
 import LogoutButton from './logout-button';
 
 interface MenuItem {
@@ -71,9 +72,18 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { language } = useLanguage();
+  const { user } = useAuth();
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
+  };
+
+  // 获取用户名的首字母作为头像显示
+  const getInitial = () => {
+    if (user?.username) {
+      return user.username.charAt(0).toUpperCase();
+    }
+    return '?';
   };
 
   return (
@@ -102,9 +112,9 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <div className="profile-preview">
           <div className="avatar">
-            <span>A</span>
+            <span>{getInitial()}</span>
           </div>
-          <div className="user-name">Alex</div>
+          <div className="user-name">{user?.username || '用户'}</div>
         </div>
         <LogoutButton className="logout-btn">
           <i className="fas fa-sign-out-alt"></i>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import CreateAlbumModal from './CreateAlbumModal';
 import UploadPhotosModal from './UploadPhotosModal';
@@ -37,6 +37,7 @@ export default function Albums() {
   const [currentMedia, setCurrentMedia] = useState<Photo | null>(null);
   const [isMediaViewerOpen, setIsMediaViewerOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [albumsLoaded, setAlbumsLoaded] = useState(false);
   
   // 默认封面图片集合，当相册没有封面时随机选择一个
   const defaultCovers = [
@@ -56,11 +57,16 @@ export default function Albums() {
   
   // 加载相册列表
   const loadAlbums = async () => {
+    // 如果已经加载过相册，不再重复加载
+    if (albumsLoaded) return;
+    
     try {
       setIsLoading(true);
       setError('');
       const data = await albumService.getAlbums();
+      console.log('Albums data from API:', data); // 添加调试日志
       setAlbums(data);
+      setAlbumsLoaded(true);
     } catch (err: any) {
       console.error('Failed to load albums:', err);
       setError(
@@ -107,40 +113,14 @@ export default function Albums() {
     setSelectedAlbum(null);
   };
   
-  // 上传照片成功后的回调
-  const handlePhotosUploaded = () => {
-    // 关闭上传模态框
-    setIsUploadModalOpen(false);
-    
-    // 如果当前正在查看该相册，则刷新相册数据
-    if (currentAlbum && selectedAlbum && currentAlbum.id === selectedAlbum.id) {
-      loadAlbumPhotos(currentAlbum.id);
-    }
-  };
-  
-  // 处理编辑相册按钮点击
-  const handleEditAlbum = (album: Album, e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止事件冒泡
-    // TODO: 实现编辑相册功能
-    console.log(`编辑相册: ${album.title} (ID: ${album.id})`);
-  };
-  
-  // 处理删除相册按钮点击
-  const handleDeleteAlbum = (albumId: string, albumTitle: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止事件冒泡
-    // TODO: 实现删除相册功能
-    if (window.confirm(
-      language === 'zh'
-        ? `确定要删除相册 "${albumTitle}" 吗？`
-        : `Are you sure you want to delete the album "${albumTitle}"?`
-    )) {
-      console.log(`删除相册: ${albumTitle} (ID: ${albumId})`);
-      // 这里可以调用删除API
-    }
-  };
-  
   // 加载相册照片
-  const loadAlbumPhotos = async (albumId: string) => {
+  const loadAlbumPhotos = useCallback(async (albumId: string) => {
+    // 避免重复加载同一个相册
+    if (currentAlbum && currentAlbum.id === albumId && albumPhotos.length > 0) {
+      setIsAlbumDetailOpen(true);
+      return;
+    }
+    
     try {
       setLoadingPhotos(true);
       const albumWithPhotos = await albumService.getAlbumWithPhotos(albumId);
@@ -193,12 +173,44 @@ export default function Albums() {
     } finally {
       setLoadingPhotos(false);
     }
+  }, [currentAlbum, albumPhotos.length, language, getCoupleSignedUrl]);
+  
+  // 上传照片成功后的回调
+  const handlePhotosUploaded = useCallback(() => {
+    // 关闭上传模态框
+    setIsUploadModalOpen(false);
+    
+    // 如果当前正在查看该相册，则刷新相册数据
+    if (currentAlbum && selectedAlbum && currentAlbum.id === selectedAlbum.id) {
+      loadAlbumPhotos(currentAlbum.id);
+    }
+  }, [currentAlbum, selectedAlbum, loadAlbumPhotos]);
+  
+  // 处理编辑相册按钮点击
+  const handleEditAlbum = (album: Album, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡
+    // TODO: 实现编辑相册功能
+    console.log(`编辑相册: ${album.title} (ID: ${album.id})`);
+  };
+  
+  // 处理删除相册按钮点击
+  const handleDeleteAlbum = (albumId: string, albumTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡
+    // TODO: 实现删除相册功能
+    if (window.confirm(
+      language === 'zh'
+        ? `确定要删除相册 "${albumTitle}" 吗？`
+        : `Are you sure you want to delete the album "${albumTitle}"?`
+    )) {
+      console.log(`删除相册: ${albumTitle} (ID: ${albumId})`);
+      // 这里可以调用删除API
+    }
   };
   
   // 处理相册点击
-  const handleAlbumClick = (album: Album) => {
+  const handleAlbumClick = useCallback((album: Album) => {
     loadAlbumPhotos(album.id);
-  };
+  }, [loadAlbumPhotos]);
   
   // 关闭相册详情
   const handleCloseAlbumDetail = () => {
@@ -310,7 +322,12 @@ export default function Albums() {
                   <div className="album-name">{album.title}</div>
                   <div className="album-meta">
                     <div>
-                      {album.photos_videos ? (
+                      {album.count !== undefined ? (
+                        <T 
+                          zh={`${album.count}张照片`} 
+                          en={`${album.count} Photos`} 
+                        />
+                      ) : album.photos_videos ? (
                         <T 
                           zh={`${album.photos_videos.length}张照片`} 
                           en={`${album.photos_videos.length} Photos`} 
@@ -375,7 +392,7 @@ export default function Albums() {
                   <i className="fas fa-calendar"></i> {formatDate(currentAlbum.created_at)}
                 </span>
                 <span>
-                  <i className="fas fa-image"></i> {albumPhotos.length} <T zh="张照片" en="Photos" />
+                  <i className="fas fa-image"></i> {currentAlbum.count !== undefined ? currentAlbum.count : albumPhotos.length} <T zh="张照片" en="Photos" />
                 </span>
               </div>
             </div>

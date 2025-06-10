@@ -1,5 +1,6 @@
 import OSS from 'ali-oss';
 import { coupleMediaService } from '@/services/couple-media-service';
+import { getCoupleSTSToken } from './stsTokenCache';
 
 export interface STSTokenResponse {
   accessKeyId: string;
@@ -16,19 +17,20 @@ export interface STSTokenResponse {
  */
 export const getCoupleOSSClient = async (): Promise<OSS> => {
   try {
-    // 使用情侣服务获取STS令牌
-    const response = await coupleMediaService.getCoupleSTSToken();
+    // 使用缓存服务获取情侣STS令牌
+    const stsToken = await getCoupleSTSToken();
     
     // 使用STS令牌创建OSS客户端
     const client = new OSS({
-      region: "oss-" + response.region,
-      accessKeyId: response.accessKeyId,
-      accessKeySecret: response.accessKeySecret,
-      stsToken: response.securityToken,
+      region: "oss-" + stsToken.region,
+      accessKeyId: stsToken.accessKeyId,
+      accessKeySecret: stsToken.accessKeySecret,
+      stsToken: stsToken.securityToken,
       secure: true,
-      bucket: response.bucket,
+      bucket: stsToken.bucket,
       refreshSTSToken: async () => {
-        const refreshToken = await coupleMediaService.getCoupleSTSToken();
+        // 当令牌需要刷新时，使用缓存服务获取新令牌
+        const refreshToken = await getCoupleSTSToken();
         return {
           accessKeyId: refreshToken.accessKeyId,
           accessKeySecret: refreshToken.accessKeySecret,

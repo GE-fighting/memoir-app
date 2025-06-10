@@ -1,5 +1,6 @@
 import OSS from 'ali-oss';
 import { apiClient } from '@/services/api-client';
+import { getPersonalSTSToken } from './stsTokenCache';
 
 /**
  * Upload file to OSS with progress tracking
@@ -125,19 +126,20 @@ export interface FileListItem {
 // 获取STS令牌并创建OSS客户端
 export const getOSSClient = async (): Promise<OSS> => {
   try {
-    // 使用apiClient获取STS令牌
-    const response = await apiClient.get<STSTokenResponse>("oss/token");
+    // 使用缓存服务获取STS令牌
+    const stsToken = await getPersonalSTSToken();
     
     // 使用STS令牌创建OSS客户端
     const client = new OSS({
-      region: "oss-" + response.region,
-      accessKeyId: response.accessKeyId,
-      accessKeySecret: response.accessKeySecret,
-      stsToken: response.securityToken,
+      region: "oss-" + stsToken.region,
+      accessKeyId: stsToken.accessKeyId,
+      accessKeySecret: stsToken.accessKeySecret,
+      stsToken: stsToken.securityToken,
       secure: true,
-      bucket: response.bucket,
+      bucket: stsToken.bucket,
       refreshSTSToken: async () => {
-        const refreshToken = await apiClient.get<STSTokenResponse>("oss/token");
+        // 当令牌需要刷新时，使用缓存服务获取新令牌
+        const refreshToken = await getPersonalSTSToken();
         return {
           accessKeyId: refreshToken.accessKeyId,
           accessKeySecret: refreshToken.accessKeySecret,

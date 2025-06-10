@@ -7,6 +7,7 @@ export interface Album {
   title: string;
   description?: string;
   cover_url?: string;
+  count?: number;
   created_at: string;
   updated_at: string;
   photos_videos?: any[];

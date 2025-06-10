@@ -37,9 +37,6 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
   
   return (
     <>
-      {/* 语言切换器，显示在页面右上角 */}
-      <LanguageSwitcher />
-      
       {/* 侧边栏组件，包含导航菜单 */}
       <Sidebar />
       
@@ -54,6 +51,9 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
           
           {/* 右侧操作区域 */}
           <div className="header-actions">
+            {/* 语言切换器，移到顶部操作区域 */}
+            <LanguageSwitcher />
+            
             {/* 通知图标 */}
             <div className="notification-bell">
               <i className="far fa-bell"></i>
@@ -65,12 +65,6 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
               <i className="fas fa-sign-out-alt mr-2"></i>
               <T zh="退出" en="Logout" />
             </LogoutButton>
-            
-            {/* 新建按钮，使用T组件实现多语言 */}
-            <button className="btn btn-primary">
-              <i className="fas fa-plus"></i>
-              <T zh="新建" en="Create New" />
-            </button>
           </div>
         </div>
         

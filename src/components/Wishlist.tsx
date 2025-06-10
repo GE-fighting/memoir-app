@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { T, useLanguage } from './LanguageContext';
+import { useWishModal } from './ui/wish-modal';
 
 interface WishItem {
   id: number;
@@ -14,7 +15,6 @@ interface WishItem {
 
 export default function Wishlist() {
   const { language } = useLanguage();
-  const [newWishText, setNewWishText] = useState('');
   const [activeCategory, setActiveCategory] = useState<'travel' | 'promise'>('travel');
   const [wishlist, setWishlist] = useState<WishItem[]>([
     {
@@ -49,25 +49,25 @@ export default function Wishlist() {
     }
   ]);
 
+  const { openModal, WishModalComponent } = useWishModal({
+    onSave: (wishData) => {
+      const newWish: WishItem = {
+        id: Date.now(),
+        title: wishData.title,
+        description: wishData.description,
+        completed: false,
+        category: wishData.category,
+        date: wishData.date
+      };
+      
+      setWishlist([...wishlist, newWish]);
+    }
+  });
+
   const toggleComplete = (id: number) => {
     setWishlist(wishlist.map(wish => 
       wish.id === id ? { ...wish, completed: !wish.completed } : wish
     ));
-  };
-
-  const addNewWish = () => {
-    if (newWishText.trim() === '') return;
-    
-    const newWish: WishItem = {
-      id: Date.now(),
-      title: newWishText,
-      description: '',
-      completed: false,
-      category: activeCategory
-    };
-    
-    setWishlist([...wishlist, newWish]);
-    setNewWishText('');
   };
 
   const deleteWish = (id: number) => {
@@ -78,6 +78,8 @@ export default function Wishlist() {
   
   return (
     <div className="wish-container">
+      {WishModalComponent}
+      
       <div className="category-tabs">
         <button 
           className={`category-tab ${activeCategory === 'travel' ? 'active' : ''}`}
@@ -96,14 +98,10 @@ export default function Wishlist() {
       </div>
 
       <div className="wish-add-form">
-        <input
-          type="text"
-          value={newWishText}
-          onChange={(e) => setNewWishText(e.target.value)}
-          placeholder={language === 'zh' ? '添加新心愿...' : 'Add new wish...'}
-          className="wish-input"
-        />
-        <button className="wish-add-btn" onClick={addNewWish}>
+        <button 
+          className="wish-add-btn w-full flex items-center justify-center gap-2"
+          onClick={() => openModal(activeCategory)}
+        >
           <i className="fas fa-plus"></i>
           <T zh="添加" en="Add" />
         </button>
@@ -184,26 +182,12 @@ export default function Wishlist() {
           gap: 12px;
         }
 
-        .wish-input {
-          flex: 1;
-          padding: 14px 16px;
-          border: 1px solid #e1e1e1;
-          border-radius: 8px;
-          font-size: 16px;
-          transition: border 0.3s ease;
-        }
-
-        .wish-input:focus {
-          outline: none;
-          border-color: #6c5ce7;
-        }
-
         .wish-add-btn {
           background: #6c5ce7;
           color: white;
           border: none;
           border-radius: 8px;
-          padding: 0 24px;
+          padding: 14px 24px;
           font-weight: 500;
           cursor: pointer;
           display: flex;

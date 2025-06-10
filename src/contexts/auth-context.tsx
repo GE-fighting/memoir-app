@@ -4,6 +4,7 @@ import { createContext, useState, useContext, useEffect, ReactNode } from "react
 import { useRouter } from "next/navigation";
 import { userService, authService } from "@/services";
 import { User } from "@/services/api-types";
+import { clearAllSTSTokenCache } from "@/lib/services/stsTokenCache";
 
 // 定义用户类型
 type AuthUser = User | null;
@@ -162,6 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authService.clearTokens();
     localStorage.removeItem('userId');
     localStorage.removeItem('coupleID');
+    // 清除STS令牌缓存
+    clearAllSTSTokenCache();
     setUser(null);
     router.push("/auth/login");
   };

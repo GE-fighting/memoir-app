@@ -56,12 +56,15 @@ export function LanguageSwitcher() {
       <button 
         className={`language-btn ${language === 'en' ? 'active' : ''}`}
         onClick={() => setLanguage('en')}
+        aria-label="Switch to English"
       >
         EN
       </button>
+      <span className="language-divider">|</span>
       <button 
         className={`language-btn ${language === 'zh' ? 'active' : ''}`}
         onClick={() => setLanguage('zh')}
+        aria-label="切换到中文"
       >
         中
       </button>
