@@ -1,80 +1,115 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import { useWishModal } from './ui/wish-modal';
-
-interface WishItem {
-  id: number;
-  title: string;
-  description: string;
-  completed: boolean;
-  category: 'travel' | 'promise';
-  date?: string;
-}
+import { wishlistService } from '@/services/wishlist-service';
+import { WishlistItem as WishlistItemType, WishlistItemStatus } from '@/services/api-types';
+import { useAuth } from '@/contexts/auth-context'; // 使用正确的认证上下文
 
 export default function Wishlist() {
   const { language } = useLanguage();
-  const [activeCategory, setActiveCategory] = useState<'travel' | 'promise'>('travel');
-  const [wishlist, setWishlist] = useState<WishItem[]>([
-    {
-      id: 1,
-      title: language === 'zh' ? '巴黎之旅' : 'Trip to Paris',
-      description: language === 'zh' ? '参观埃菲尔铁塔，在塞纳河畔漫步，品尝正宗的法国美食。' : 'Visit the Eiffel Tower, stroll along the Seine, and taste authentic French cuisine.',
-      completed: false,
-      category: 'travel'
-    },
-    {
-      id: 2,
-      title: language === 'zh' ? '马尔代夫度假' : 'Maldives Vacation',
-      description: language === 'zh' ? '在水上别墅度过浪漫的一周，浮潜，欣赏日落。' : 'Spend a romantic week in an overwater villa, snorkeling, and watching sunsets.',
-      completed: false,
-      category: 'travel',
-      date: '2023-12-15'
-    },
-    {
-      id: 3,
-      title: language === 'zh' ? '学习一项新技能' : 'Learn a New Skill Together',
-      description: language === 'zh' ? '一起报名烹饪课程，学习制作我们最喜欢的菜肴。' : 'Sign up for cooking classes and learn to make our favorite dishes.',
-      completed: true,
-      category: 'promise',
-      date: '2023-08-10'
-    },
-    {
-      id: 4,
-      title: language === 'zh' ? '观星夜晚' : 'Stargazing Night',
-      description: language === 'zh' ? '带上望远镜和毯子，去郊外找一个安静的地方观星。' : 'Take a telescope and blankets, find a quiet spot in the countryside to watch the stars.',
-      completed: false,
-      category: 'promise'
+  const { user } = useAuth(); // 从认证上下文获取用户信息
+  const [activeCategory, setActiveCategory] = useState<1 | 2>(1); // 1-日常，2-旅行
+  const [wishlist, setWishlist] = useState<WishlistItemType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // 从用户信息或localStorage中获取情侣ID
+  const coupleId = user?.couple_id || 
+                  (typeof window !== 'undefined' ? localStorage.getItem('coupleID') : null) || 
+                  "1"; // 如果都不存在，则使用默认值
+  
+  useEffect(() => {
+    if (coupleId) {
+      fetchWishlistItems();
+    } else {
+      setError(language === 'zh' ? '未找到情侣关系，请先建立关系' : 'No couple relationship found, please establish one first');
     }
-  ]);
+  }, [coupleId, language]);
+
+  const fetchWishlistItems = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log(`Fetching wishlist items for couple ID: ${coupleId}`);
+      const items = await wishlistService.getWishlistItems(coupleId);
+      setWishlist(items);
+    } catch (err) {
+      console.error('Failed to fetch wishlist items:', err);
+      setError(language === 'zh' ? '获取心愿单失败' : 'Failed to fetch wishlist');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const { openModal, WishModalComponent } = useWishModal({
-    onSave: (wishData) => {
-      const newWish: WishItem = {
-        id: Date.now(),
-        title: wishData.title,
-        description: wishData.description,
-        completed: false,
-        category: wishData.category,
-        date: wishData.date
-      };
-      
-      setWishlist([...wishlist, newWish]);
+    onSave: async (wishData) => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const newWish = await wishlistService.createWishlistItem({
+          couple_id: coupleId,
+          title: wishData.title,
+          description: wishData.description,
+          priority: wishData.priority || 2, // 添加优先级，默认为中等
+          type: wishData.category === 'travel' ? 2 : 1, // 1-日常，2-旅行
+          reminder_date: wishData.date
+        });
+        
+        setWishlist([...wishlist, newWish]);
+      } catch (err) {
+        console.error('Failed to create wishlist item:', err);
+        setError(language === 'zh' ? '创建心愿单项目失败' : 'Failed to create wishlist item');
+      } finally {
+        setLoading(false);
+      }
     }
   });
 
-  const toggleComplete = (id: number) => {
-    setWishlist(wishlist.map(wish => 
-      wish.id === id ? { ...wish, completed: !wish.completed } : wish
-    ));
+  const toggleComplete = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const item = wishlist.find(wish => wish.id === id);
+      if (!item) return;
+      
+      const newStatus = item.status === WishlistItemStatus.COMPLETED 
+        ? WishlistItemStatus.PENDING 
+        : WishlistItemStatus.COMPLETED;
+      
+      await wishlistService.updateWishlistItemStatus(id, { status: newStatus });
+      
+      setWishlist(wishlist.map(wish => 
+        wish.id === id ? { ...wish, status: newStatus } : wish
+      ));
+    } catch (err) {
+      console.error('Failed to update wishlist item status:', err);
+      setError(language === 'zh' ? '更新心愿单状态失败' : 'Failed to update wishlist item status');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteWish = (id: number) => {
-    setWishlist(wishlist.filter(wish => wish.id !== id));
+  const deleteWish = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await wishlistService.deleteWishlistItem(id);
+      
+      setWishlist(wishlist.filter(wish => wish.id !== id));
+    } catch (err) {
+      console.error('Failed to delete wishlist item:', err);
+      setError(language === 'zh' ? '删除心愿单项目失败' : 'Failed to delete wishlist item');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredWishes = wishlist.filter(wish => wish.category === activeCategory);
+  const filteredWishes = wishlist.filter(wish => wish.type === activeCategory);
   
   return (
     <div className="wish-container">
@@ -82,15 +117,15 @@ export default function Wishlist() {
       
       <div className="category-tabs">
         <button 
-          className={`category-tab ${activeCategory === 'travel' ? 'active' : ''}`}
-          onClick={() => setActiveCategory('travel')}
+          className={`category-tab ${activeCategory === 2 ? 'active' : ''}`}
+          onClick={() => setActiveCategory(2)}
         >
           <i className="fas fa-map-marked-alt"></i>
           <span><T zh="旅行梦想" en="Travel Dreams" /></span>
         </button>
         <button 
-          className={`category-tab ${activeCategory === 'promise' ? 'active' : ''}`}
-          onClick={() => setActiveCategory('promise')}
+          className={`category-tab ${activeCategory === 1 ? 'active' : ''}`}
+          onClick={() => setActiveCategory(1)}
         >
           <i className="fas fa-hands-holding-heart"></i>
           <span><T zh="共赴之约" en="Love Promises" /></span>
@@ -100,36 +135,60 @@ export default function Wishlist() {
       <div className="wish-add-form">
         <button 
           className="wish-add-btn w-full flex items-center justify-center gap-2"
-          onClick={() => openModal(activeCategory)}
+          onClick={() => openModal(activeCategory === 2 ? 'travel' : 'promise')}
+          disabled={loading}
         >
           <i className="fas fa-plus"></i>
           <T zh="添加" en="Add" />
         </button>
       </div>
 
+      {error && (
+        <div className="error-message">
+          <i className="fas fa-exclamation-circle"></i>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {loading && (
+        <div className="loading-state">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p><T zh="加载中..." en="Loading..." /></p>
+        </div>
+      )}
+
       <div className="wish-list">
-        {filteredWishes.length === 0 ? (
+        {!loading && filteredWishes.length === 0 ? (
           <div className="empty-state">
             <i className="fas fa-heart"></i>
             <p><T zh="还没有心愿，添加一个吧！" en="No wishes yet, add one!" /></p>
           </div>
         ) : (
           filteredWishes.map(wish => (
-            <div className={`wish-item ${wish.completed ? 'completed' : ''}`} key={wish.id}>
+            <div className={`wish-item ${wish.status === WishlistItemStatus.COMPLETED ? 'completed' : ''} priority-${wish.priority === 1 ? 'high' : wish.priority === 2 ? 'medium' : 'low'}`} key={wish.id}>
               <div className="wish-checkbox" onClick={() => toggleComplete(wish.id)}>
-                {wish.completed ? <i className="fas fa-check"></i> : null}
+                {wish.status === WishlistItemStatus.COMPLETED ? <i className="fas fa-check"></i> : null}
               </div>
               <div className="wish-content">
-                <h3 className="wish-title">{wish.title}</h3>
+                <h3 className="wish-title">
+                  {wish.title}
+                  <span className={`priority-badge priority-${wish.priority === 1 ? 'high' : wish.priority === 2 ? 'medium' : 'low'}`}>
+                    <i className="fas fa-flag"></i>
+                    <span>{wish.priority === 1 ? <T zh="高" en="High" /> : 
+                          wish.priority === 2 ? <T zh="中" en="Medium" /> : 
+                          <T zh="低" en="Low" />}
+                    </span>
+                  </span>
+                </h3>
                 {wish.description && <p className="wish-description">{wish.description}</p>}
-                {wish.date && (
+                {wish.reminder_date && (
                   <div className="wish-date">
                     <i className="fas fa-calendar"></i>
-                    <span>{wish.date}</span>
+                    <span>{wish.reminder_date}</span>
                   </div>
                 )}
               </div>
-              <button className="wish-delete" onClick={() => deleteWish(wish.id)}>
+              <button className="wish-delete" onClick={() => deleteWish(wish.id)} disabled={loading}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -200,6 +259,40 @@ export default function Wishlist() {
           background: #5b4ecc;
         }
 
+        .wish-add-btn:disabled {
+          background: #a29ddb;
+          cursor: not-allowed;
+        }
+
+        .error-message {
+          background: #ffe0e0;
+          color: #d63031;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .loading-state,
+        .empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 48px 0;
+          color: #adb5bd;
+          text-align: center;
+        }
+
+        .loading-state i,
+        .empty-state i {
+          font-size: 48px;
+          margin-bottom: 16px;
+          color: #e9ecef;
+        }
+
         .wish-list {
           display: flex;
           flex-direction: column;
@@ -210,14 +303,32 @@ export default function Wishlist() {
           display: flex;
           align-items: flex-start;
           padding: 16px;
+          padding-left: 20px;
           background: white;
           border-radius: 12px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
           transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          border-left-width: 6px;
+          border-left-style: solid;
         }
 
         .wish-item.completed {
           background: #f8f9fa;
+          border-left-color: #adb5bd !important;
+        }
+
+        .wish-item.priority-high {
+          border-left-color: #e74c3c;
+        }
+
+        .wish-item.priority-medium {
+          border-left-color: #f39c12;
+        }
+
+        .wish-item.priority-low {
+          border-left-color: #2ecc71;
         }
 
         .wish-item.completed .wish-title,
@@ -255,6 +366,33 @@ export default function Wishlist() {
           font-weight: 500;
           margin: 0 0 8px 0;
           color: #333;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .priority-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
+          font-weight: normal;
+          padding: 2px 8px;
+          border-radius: 12px;
+          color: white;
+        }
+
+        .priority-badge.priority-high {
+          background-color: #e74c3c;
+        }
+
+        .priority-badge.priority-medium {
+          background-color: #f39c12;
+        }
+
+        .priority-badge.priority-low {
+          background-color: #2ecc71;
         }
 
         .wish-description {
@@ -270,6 +408,7 @@ export default function Wishlist() {
           gap: 6px;
           font-size: 14px;
           color: #888;
+          margin-bottom: 4px;
         }
 
         .wish-delete {
@@ -290,20 +429,9 @@ export default function Wishlist() {
           background: #fff0f0;
         }
 
-        .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 48px 0;
-          color: #adb5bd;
-          text-align: center;
-        }
-
-        .empty-state i {
-          font-size: 48px;
-          margin-bottom: 16px;
+        .wish-delete:disabled {
           color: #e9ecef;
+          cursor: not-allowed;
         }
       `}</style>
     </div>

@@ -136,31 +136,36 @@ export interface UpdateMediaRequest {
 export enum WishlistItemStatus {
   PENDING = "pending",
   COMPLETED = "completed",
-  CANCELLED = "cancelled",
 }
 
 export interface WishlistItem {
   id: string;
+  couple_id: string;
   title: string;
   description?: string;
+  priority: number; // 1-高，2-中，3-低
   status: WishlistItemStatus;
-  due_date?: string;
-  completed_at?: string;
-  created_by: string;
+  type: number; // 1-日常，2-旅行
+  reminder_date?: string; // 格式: "2006-01-02"
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateWishlistItemRequest {
+  couple_id: string;
   title: string;
   description?: string;
-  due_date?: string;
+  priority?: number; // 1-高，2-中，3-低
+  type?: number; // 1-日常，2-旅行
+  reminder_date?: string;
 }
 
 export interface UpdateWishlistItemRequest {
   title?: string;
   description?: string;
-  due_date?: string;
+  priority?: number;
+  type?: number;
+  reminder_date?: string;
 }
 
 export interface UpdateWishlistItemStatusRequest {
@@ -171,6 +176,14 @@ export interface UpdateWishlistItemStatusRequest {
 export interface PaginationParams {
   page?: number;
   limit?: number;
+}
+
+// 心愿清单查询参数
+export interface WishlistQueryParams extends PaginationParams {
+  couple_id: string;
+  status?: WishlistItemStatus;
+  priority?: number;
+  type?: number;
 }
 
 // 更新的分页参数，与后端一致
@@ -186,8 +199,6 @@ export interface PaginatedResponse<T> {
   limit: number;
   total_pages: number;
 }
-
-
 
 // 通用响应类型
 export interface ApiResponse<T> {
