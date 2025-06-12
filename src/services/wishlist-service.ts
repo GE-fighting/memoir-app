@@ -50,8 +50,8 @@ export const wishlistService = {
    * @param itemData 更新的数据
    * @returns 更新后的心愿清单项
    */
-  updateWishlistItem: async (id: string, itemData: UpdateWishlistItemRequest): Promise<WishlistItem> => {
-    return apiClient.put<WishlistItem>(`/wishlist/${id}`, itemData);
+  updateWishlistItem: async (itemData: UpdateWishlistItemRequest): Promise<WishlistItem> => {
+    return apiClient.put<WishlistItem>(`/wishlist/update`, itemData);
   },
 
   /**

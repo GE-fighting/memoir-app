@@ -14,6 +14,13 @@ interface WishModalProps {
     priority?: number;
   }) => void;
   initialCategory: 'travel' | 'promise';
+  initialData?: {
+    title: string;
+    description: string;
+    priority: number;
+    category: 'travel' | 'promise';
+    date?: string;
+  };
 }
 
 interface UseWishModalOptions {
@@ -29,14 +36,17 @@ interface UseWishModalOptions {
 export function useWishModal({ onSave }: UseWishModalOptions) {
   const [isOpen, setIsOpen] = useState(false);
   const [initialCategory, setInitialCategory] = useState<'travel' | 'promise'>('travel');
+  const [initialData, setInitialData] = useState<WishModalProps['initialData']>();
 
-  const openModal = (category: 'travel' | 'promise') => {
+  const openModal = (category: 'travel' | 'promise', data?: WishModalProps['initialData']) => {
     setInitialCategory(category);
+    setInitialData(data);
     setIsOpen(true);
   };
 
   const closeModal = () => {
     setIsOpen(false);
+    setInitialData(undefined);
   };
 
   const WishModalComponent = (
@@ -48,19 +58,20 @@ export function useWishModal({ onSave }: UseWishModalOptions) {
         closeModal();
       }}
       initialCategory={initialCategory}
+      initialData={initialData}
     />
   );
 
   return { openModal, closeModal, WishModalComponent };
 }
 
-export default function WishModal({ isOpen, onClose, onSave, initialCategory }: WishModalProps) {
+export default function WishModal({ isOpen, onClose, onSave, initialCategory, initialData }: WishModalProps) {
   const { language } = useLanguage();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || '');
   const [category, setCategory] = useState<'travel' | 'promise'>(initialCategory);
-  const [date, setDate] = useState('');
-  const [priority, setPriority] = useState<number>(2); // 默认中等优先级
+  const [date, setDate] = useState(initialData?.date || '');
+  const [priority, setPriority] = useState<number>(initialData?.priority || 2); // 默认中等优先级
 
   if (!isOpen) return null;
 

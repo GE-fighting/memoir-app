@@ -161,6 +161,7 @@ export interface CreateWishlistItemRequest {
 }
 
 export interface UpdateWishlistItemRequest {
+  ID: string;
   title?: string;
   description?: string;
   priority?: number;
