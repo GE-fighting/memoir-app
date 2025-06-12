@@ -164,19 +164,19 @@ export default function Wishlist() {
         </button>
       </div>
 
-      <div className="wish-add-form">
-        <button 
-          className="wish-add-btn w-full flex items-center justify-center gap-2"
-          onClick={() => {
-            setEditingWish(null);
-            openModal(activeCategory === 2 ? 'travel' : 'promise');
-          }}
-          disabled={loading}
-        >
-          <i className="fas fa-plus"></i>
-          <T zh="添加" en="Add" />
-        </button>
-      </div>
+      {/* 浮动添加按钮 */}
+      <button 
+        className="fab-button"
+        onClick={() => {
+          setEditingWish(null);
+          openModal(activeCategory === 2 ? 'travel' : 'promise');
+        }}
+        disabled={loading}
+        aria-label={language === 'zh' ? '添加心愿' : 'Add wish'}
+      >
+        <i className="fas fa-plus"></i>
+        <span className="fab-tooltip">{language === 'zh' ? '添加' : 'Add'}</span>
+      </button>
 
       {error && (
         <div className="error-message">
@@ -207,13 +207,7 @@ export default function Wishlist() {
               <div className="wish-content">
                 <h3 className="wish-title">
                   {wish.title}
-                  <span className={`priority-badge priority-${wish.priority === 1 ? 'high' : wish.priority === 2 ? 'medium' : 'low'}`}>
-                    <i className="fas fa-flag"></i>
-                    <span>{wish.priority === 1 ? <T zh="高" en="High" /> : 
-                          wish.priority === 2 ? <T zh="中" en="Medium" /> : 
-                          <T zh="低" en="Low" />}
-                    </span>
-                  </span>
+
                 </h3>
                 {wish.description && <p className="wish-description">{wish.description}</p>}
                 {wish.reminder_date && (
@@ -275,33 +269,93 @@ export default function Wishlist() {
           font-size: 18px;
         }
 
-        .wish-add-form {
-          display: flex;
-          margin-bottom: 24px;
-          gap: 12px;
-        }
-
-        .wish-add-btn {
+        .fab-button {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
           background: #6c5ce7;
           color: white;
           border: none;
-          border-radius: 8px;
-          padding: 14px 24px;
-          font-weight: 500;
+          border-radius: 50%;
+          width: 60px;
+          height: 60px;
+          font-size: 24px;
           cursor: pointer;
           display: flex;
           align-items: center;
-          gap: 8px;
-          transition: background 0.3s ease;
+          justify-content: center;
+          box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+          transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          z-index: 100;
+          transform: translateZ(0);
         }
 
-        .wish-add-btn:hover {
+        /* 移动设备上的样式调整 */
+        @media (max-width: 768px) {
+          .fab-button {
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            font-size: 22px;
+          }
+        }
+
+        .fab-button:hover {
           background: #5b4ecc;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          transform: translateY(-2px);
         }
 
-        .wish-add-btn:disabled {
+        .fab-button:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .fab-button:disabled {
           background: #a29ddb;
           cursor: not-allowed;
+          box-shadow: none;
+          transform: none;
+        }
+
+        .fab-button i {
+          transition: transform 0.2s ease;
+        }
+
+        .fab-button:hover i {
+          transform: rotate(90deg);
+        }
+
+        .fab-tooltip {
+          position: absolute;
+          right: 70px;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 5px 12px;
+          border-radius: 4px;
+          font-size: 14px;
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+        }
+
+        .fab-button:hover .fab-tooltip {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        /* 添加小三角形指向按钮 */
+        .fab-tooltip:after {
+          content: '';
+          position: absolute;
+          right: -6px;
+          top: 50%;
+          transform: translateY(-50%);
+          border-left: 6px solid rgba(0, 0, 0, 0.7);
+          border-top: 6px solid transparent;
+          border-bottom: 6px solid transparent;
         }
 
         .error-message {

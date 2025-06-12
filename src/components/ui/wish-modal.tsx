@@ -73,6 +73,24 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
   const [date, setDate] = useState(initialData?.date || '');
   const [priority, setPriority] = useState<number>(initialData?.priority || 2); // 默认中等优先级
 
+  // 当initialData变化时更新表单状态
+  React.useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || '');
+      setDescription(initialData.description || '');
+      setCategory(initialData.category);
+      setDate(initialData.date || '');
+      setPriority(initialData.priority || 2);
+    } else {
+      // 当initialData为undefined时（新增模式），重置表单状态
+      setTitle('');
+      setDescription('');
+      setCategory(initialCategory);
+      setDate('');
+      setPriority(2);
+    }
+  }, [initialData, initialCategory]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -96,15 +114,19 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
   return (
     <div className="modal-overlay">
       <div className="modal-container">
-        <div className="modal-header">
-          <h2>
-            <T zh={category === 'travel' ? '添加旅行梦想' : '添加共赴之约'} 
-               en={category === 'travel' ? 'Add Travel Dream' : 'Add Love Promise'} />
-          </h2>
-          <button className="close-button" onClick={onClose}>
-            <i className="fas fa-times"></i>
-          </button>
-        </div>
+              <div className="modal-header">
+        <h2>
+          <T zh={initialData 
+            ? (category === 'travel' ? '编辑旅行梦想' : '编辑共赴之约')
+            : (category === 'travel' ? '添加旅行梦想' : '添加共赴之约')} 
+             en={initialData
+            ? (category === 'travel' ? 'Edit Travel Dream' : 'Edit Love Promise')
+            : (category === 'travel' ? 'Add Travel Dream' : 'Add Love Promise')} />
+        </h2>
+        <button className="close-button" onClick={onClose}>
+          <i className="fas fa-times"></i>
+        </button>
+      </div>
         
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
