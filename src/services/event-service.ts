@@ -6,7 +6,8 @@ import {
   CreateTimelineEventRequest, 
   UpdateTimelineEventRequest,
   PaginationParams,
-  PaginatedResponse
+  PaginatedResponse,
+  PageParams
 } from "./api-types";
 
 /**
@@ -16,15 +17,17 @@ import {
 export const eventService = {
   /**
    * 获取时间轴事件列表
-   * @param params 分页参数
+   * @param params 查询参数
    * @returns 时间轴事件列表
    */
-  getEvents: async (params?: PaginationParams & {
-    startDate?: string;
-    endDate?: string;
-    tags?: string[];
+  getEvents: async (params: PageParams & {
+    couple_id: string;      // 必需参数：情侣ID
+    start_date?: string;    // 可选参数：开始日期，格式：2006-01-02
+    end_date?: string;      // 可选参数：结束日期，格式：2006-01-02
+    title?: string;         // 可选参数：事件标题
+    location_id?: string;   // 可选参数：位置ID
   }): Promise<PaginatedResponse<TimelineEvent>> => {
-    return apiClient.get<PaginatedResponse<TimelineEvent>>("/events", { params });
+    return apiClient.get<PaginatedResponse<TimelineEvent>>("/events/page", { params });
   },
 
   /**
@@ -32,7 +35,7 @@ export const eventService = {
    * @param id 事件ID
    * @returns 时间轴事件
    */
-  getEvent: async (id: number): Promise<TimelineEvent> => {
+  getEvent: async (id: string): Promise<TimelineEvent> => {
     return apiClient.get<TimelineEvent>(`/events/${id}`);
   },
 
@@ -42,7 +45,7 @@ export const eventService = {
    * @returns 创建的时间轴事件
    */
   createEvent: async (eventData: CreateTimelineEventRequest): Promise<TimelineEvent> => {
-    return apiClient.post<TimelineEvent>("/events", eventData);
+    return apiClient.post<TimelineEvent>("/events/create", eventData);
   },
 
   /**

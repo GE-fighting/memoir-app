@@ -39,8 +39,8 @@ const menuItems: MenuItem[] = [
   {
     path: '/timeline',
     icon: 'fas fa-clock-rotate-left',
-    labelZh: '时间轴',
-    labelEn: 'Timeline'
+    labelZh: '记忆长廊',
+    labelEn: 'Memory Gallery'
   },
   {
     path: '/albums',

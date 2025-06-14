@@ -1,16 +1,16 @@
 /* Tailwind CSS 引入指令 - Next.js项目中的基础样式配置 */
+/* 导入自定义样式文件 - 确保模态框样式优先加载 */
+@import '../styles/modal.css';
+@import '../styles/layout.css';
+@import '../styles/albums.css';
+@import '../styles/upload.css';
+
 /* 导入Tailwind的基础样式，如重置和规范化样式 */
 @tailwind base;
 /* 导入Tailwind的组件类，提供预定义组件样式 */
 @tailwind components;
 /* 导入Tailwind的功能类，用于直接在HTML元素中应用样式 */
 @tailwind utilities;
-
-/* 导入自定义样式文件 */
-@import '../styles/layout.css';
-@import '../styles/modal.css';
-@import '../styles/albums.css';
-@import '../styles/upload.css';
 
 /* 全局CSS变量定义，用于主题颜色和样式一致性 */
 :root {
@@ -1280,4 +1280,59 @@ input:focus, select:focus, textarea:focus {
     grid-gap: 12px;
     padding: 12px;
   }
+}
+
+/* Floating footprints button */
+.floating-footprints-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  color: #3b82f6;
+  padding: 8px 16px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 40;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.floating-footprints-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.count-badge {
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Animation for the modal */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
 }

@@ -5,7 +5,7 @@ import Timeline from '@/components/Timeline';
 
 export default function TimelinePage() {
   return (
-    <MainLayout title={{ zh: '时间轴', en: 'Timeline' }}>
+    <MainLayout title={{ zh: '我们的故事', en: 'Our Story' }}>
       <Timeline />
     </MainLayout>
   );

@@ -45,28 +45,27 @@ export interface CoupleSettings {
 // 时间轴事件相关类型
 export interface TimelineEvent {
   id: string;
+  couple_id: string;
+  start_date: string; // 格式：2006-01-02
+  end_date: string; // 格式：2006-01-02
   title: string;
-  description: string;
-  event_date: string;
-  location_id?: string;
-  location?: {
-    name: string;
-    latitude: number;
-    longitude: number;
-  };
-  media_ids: string[];
-  tags: string[];
+  content: string;
+  locations?: Location[]; // 关联的位置列表
+  photos_videos?: PersonalMedia[]; // 关联的照片和视频列表
   created_at: string;
   updated_at: string;
+  cover_url?: string; // 封面图片URL，前端扩展字段
 }
 
 export interface CreateTimelineEventRequest {
+  couple_id: string;
+  start_date: string;
+  end_date: string;
   title: string;
-  description: string;
-  event_date: string;
-  location_id?: string;
-  media_ids?: string[];
-  tags?: string[];
+  content: string;
+  cover_url?: string;
+  location_ids?: string[];
+  photo_video_ids?: string[];
 }
 
 export interface UpdateTimelineEventRequest {
@@ -81,21 +80,21 @@ export interface UpdateTimelineEventRequest {
 // 位置相关类型
 export interface Location {
   id: string;
+  couple_id: string;
   name: string;
   description?: string;
   latitude: number;
   longitude: number;
-  address?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateLocationRequest {
+  couple_id: string;
   name: string;
   description?: string;
   latitude: number;
   longitude: number;
-  address?: string;
 }
 
 // 媒体相关类型

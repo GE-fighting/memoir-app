@@ -6,18 +6,23 @@ import {
   mediaService, 
   wishlistService,
   TimelineEvent,
-  Media,
-  WishlistItem
+  PersonalMedia,
+  WishlistItem,
+  WishlistItemStatus
 } from '@/services';
+import { useAuth } from '@/contexts/auth-context';
 
 /**
  * API 服务使用示例组件
  * 展示了如何在组件中使用各种 API 服务
  */
 export default function ApiExample() {
+  // 获取用户上下文
+  const { user } = useAuth();
+  
   // 状态定义
   const [events, setEvents] = useState<TimelineEvent[]>([]);
-  const [media, setMedia] = useState<Media[]>([]);
+  const [media, setMedia] = useState<PersonalMedia[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState({
     events: true,
@@ -34,11 +39,21 @@ export default function ApiExample() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        // 从用户上下文或 localStorage 获取 couple_id
+        const coupleId = user?.couple_id || localStorage.getItem('coupleID');
+        
+        if (!coupleId) {
+          setError(prev => ({ ...prev, events: '无法获取情侣ID，请先登录' }));
+          setLoading(prev => ({ ...prev, events: false }));
+          return;
+        }
+        
         const response = await eventService.getEvents({
           page: 1,
-          limit: 5
+          page_size: 5,
+          couple_id: coupleId
         });
-        setEvents(response.items);
+        setEvents(response.data || []);
       } catch (err) {
         console.error('获取事件失败:', err);
         setError(prev => ({ ...prev, events: '获取事件失败' }));
@@ -48,17 +63,17 @@ export default function ApiExample() {
     };
 
     fetchEvents();
-  }, []);
+  }, [user]);
 
   // 获取媒体列表
   useEffect(() => {
     const fetchMedia = async () => {
       try {
-        const response = await mediaService.getMediaList({
+        const response = await mediaService.queryPersonalMedia({
           page: 1,
-          limit: 5
+          page_size: 5
         });
-        setMedia(response.items);
+        setMedia(response.data || []);
       } catch (err) {
         console.error('获取媒体失败:', err);
         setError(prev => ({ ...prev, media: '获取媒体失败' }));
@@ -74,11 +89,17 @@ export default function ApiExample() {
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
-        const response = await wishlistService.getWishlistItems({
-          page: 1,
-          limit: 5
-        });
-        setWishlistItems(response.items);
+        // 从用户上下文或 localStorage 获取 couple_id
+        const coupleId = user?.couple_id || localStorage.getItem('coupleID');
+        
+        if (!coupleId) {
+          setError(prev => ({ ...prev, wishlist: '无法获取情侣ID，请先登录' }));
+          setLoading(prev => ({ ...prev, wishlist: false }));
+          return;
+        }
+        
+        const items = await wishlistService.getWishlistItems(coupleId);
+        setWishlistItems(items || []);
       } catch (err) {
         console.error('获取心愿清单失败:', err);
         setError(prev => ({ ...prev, wishlist: '获取心愿清单失败' }));
@@ -88,7 +109,7 @@ export default function ApiExample() {
     };
 
     fetchWishlist();
-  }, []);
+  }, [user]);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -108,10 +129,10 @@ export default function ApiExample() {
             {events.map(event => (
               <li key={event.id} className="border rounded-lg p-4">
                 <h3 className="font-medium text-lg">{event.title}</h3>
-                <p className="text-gray-600">{event.description}</p>
+                <p className="text-gray-600">{event.content}</p>
                 <div className="mt-2 text-sm">
                   <span className="text-gray-500">日期：</span>
-                  <span>{new Date(event.event_date).toLocaleDateString('zh-CN')}</span>
+                  <span>{new Date(event.start_date).toLocaleDateString('zh-CN')}</span>
                 </div>
               </li>
             ))}
@@ -134,7 +155,7 @@ export default function ApiExample() {
               <div key={item.id} className="border rounded-lg overflow-hidden">
                 {item.media_type === 'photo' ? (
                   <img 
-                    src={item.thumbnail_url || item.url} 
+                    src={item.thumbnail_url || item.media_url} 
                     alt={item.title || `照片 ${item.id}`}
                     className="w-full h-40 object-cover"
                   />
@@ -177,23 +198,23 @@ export default function ApiExample() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium text-lg">{item.title}</h3>
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    item.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    item.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                    'bg-blue-100 text-blue-800'
+                    item.status === WishlistItemStatus.COMPLETED ? 'bg-green-100 text-green-800' :
+                    item.status === WishlistItemStatus.PENDING ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
                   }`}>
                     {
-                      item.status === 'completed' ? '已完成' :
-                      item.status === 'cancelled' ? '已取消' : '进行中'
+                      item.status === WishlistItemStatus.COMPLETED ? '已完成' :
+                      item.status === WishlistItemStatus.PENDING ? '进行中' : '已取消'
                     }
                   </span>
                 </div>
                 {item.description && (
                   <p className="text-gray-600 mt-2">{item.description}</p>
                 )}
-                {item.due_date && (
+                {item.reminder_date && (
                   <div className="mt-2 text-sm">
-                    <span className="text-gray-500">截止日期：</span>
-                    <span>{new Date(item.due_date).toLocaleDateString('zh-CN')}</span>
+                    <span className="text-gray-500">提醒日期：</span>
+                    <span>{new Date(item.reminder_date).toLocaleDateString('zh-CN')}</span>
                   </div>
                 )}
               </li>
