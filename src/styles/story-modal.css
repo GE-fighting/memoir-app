@@ -1,0 +1,346 @@
+/* 故事详情模态框样式 */
+.story-modal-overlay {
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.story-modal-overlay.closing { 
+  opacity: 0; 
+}
+
+.story-modal-container {
+  display: flex;
+  width: 90%;
+  max-width: 1100px;
+  height: 85vh;
+  background-color: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.3s ease;
+}
+
+.story-modal-container.closing { 
+  opacity: 0; 
+}
+
+.story-modal-media {
+  flex: 3;
+  background-color: #000;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.story-modal-content {
+  flex: 2;
+  max-width: 380px;
+  padding: 25px;
+  position: relative;
+  overflow-y: auto;
+  background-color: #fff;
+}
+
+.story-close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: #999;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.story-close-button:hover { 
+  color: #333; 
+}
+
+.story-header { 
+  margin-bottom: 20px; 
+}
+
+.story-title { 
+  font-size: 1.6rem; 
+  font-weight: 500; 
+  margin: 0 0 8px; 
+  color: #333; 
+}
+
+.story-date { 
+  font-size: 0.9rem; 
+  color: #999; 
+}
+
+.story-body { 
+  margin-bottom: 20px; 
+}
+
+.story-content { 
+  font-size: 0.95rem; 
+  line-height: 1.5; 
+  color: #444; 
+  white-space: pre-wrap; 
+}
+
+.story-locations { 
+  margin-top: 20px; 
+  padding-top: 15px; 
+  border-top: 1px solid #eee; 
+}
+
+.section-title { 
+  font-size: 1rem; 
+  font-weight: 500; 
+  color: #333; 
+  margin: 0 0 12px; 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+}
+
+.locations-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+}
+
+.location-item { 
+  display: flex; 
+  flex-direction: column; 
+  padding: 8px 12px; 
+  background-color: #f9f9f9; 
+  border-radius: 4px; 
+}
+
+.location-name { 
+  font-weight: 500; 
+  color: #333; 
+}
+
+.location-description { 
+  font-size: 0.85rem; 
+  color: #777; 
+  margin-top: 3px; 
+}
+
+.media-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.media-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.media-image.loaded { 
+  opacity: 1; 
+}
+
+.image-loading-overlay, 
+.image-error-overlay {
+  position: absolute;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  z-index: 4;
+}
+
+.image-error-overlay { 
+  flex-direction: column; 
+  color: #fff; 
+}
+
+.image-error-overlay i { 
+  font-size: 3rem; 
+  color: #ff5252; 
+  margin-bottom: 16px; 
+}
+
+.keyboard-shortcuts {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  font-size: 0.85rem;
+  color: #999;
+  text-align: center;
+}
+
+.media-placeholder, 
+.media-loading, 
+.media-error {
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center;
+  height: 100%; 
+  width: 100%; 
+  color: #8e8e8e; 
+  background-color: #111;
+}
+
+.media-placeholder i, 
+.media-error i { 
+  font-size: 3rem; 
+  margin-bottom: 16px; 
+  color: #555; 
+}
+
+.media-error i { 
+  color: #ff5252; 
+}
+
+.media-error p { 
+  color: #fff; 
+  text-align: center; 
+  padding: 0 20px;
+}
+
+.loading-spinner {
+  width: 40px; 
+  height: 40px; 
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-left-color: #fff; 
+  border-radius: 50%; 
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner-container p { 
+  color: #aaa; 
+  margin-top: 16px; 
+  font-size: 0.9rem; 
+}
+
+.retry-button {
+  background-color: rgba(255, 255, 255, 0.15); 
+  color: white; 
+  border: none; 
+  border-radius: 4px;
+  padding: 8px 18px; 
+  font-size: 0.85rem; 
+  font-weight: 500; 
+  cursor: pointer;
+  transition: background-color 0.2s; 
+  margin-top: 14px;
+}
+
+.retry-button:hover { 
+  background-color: rgba(255, 255, 255, 0.25); 
+}
+
+@keyframes spin { 
+  to { 
+    transform: rotate(360deg); 
+  } 
+}
+
+/* 媒体导航按钮样式 */
+.media-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: background-color 0.2s, opacity 0.2s;
+  opacity: 0.7;
+}
+
+.media-nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+}
+
+.media-nav-button i {
+  font-size: 1.2rem;
+  color: #000;
+}
+
+.media-nav-prev {
+  left: 16px;
+}
+
+.media-nav-next {
+  right: 16px;
+}
+
+/* 在小屏幕上调整按钮大小 */
+@media (max-width: 768px) {
+  .media-nav-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .media-nav-button i {
+    font-size: 1rem;
+  }
+}
+
+/* 圆点导航指示器样式 */
+.media-dots-nav {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 5;
+}
+
+.media-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.media-dot:hover {
+  transform: scale(1.2);
+}
+
+.media-dot.active {
+  background-color: #ffffff;
+  transform: scale(1.2);
+} 
