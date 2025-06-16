@@ -11,6 +11,7 @@ export default function CoupleLocations() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [coupleId, setCoupleId] = useState<string | null>(null);
 
@@ -99,6 +100,44 @@ export default function CoupleLocations() {
     }
   };
 
+  // 处理删除地点
+  const handleDeleteLocation = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+      console.log('Deleting location with ID:', id);
+      await locationService.deleteLocation(id);
+      
+      // 从列表中移除已删除的地点
+      const deletedLocation = locations.find(location => location.id === id);
+      setLocations(prev => prev.filter(location => location.id !== id));
+      
+      // 设置成功消息
+      if (deletedLocation) {
+        setSuccess(language === 'zh' 
+          ? `已成功删除"${deletedLocation.name}"` 
+          : `Successfully deleted "${deletedLocation.name}"`);
+        
+        // 3秒后清除成功消息
+        setTimeout(() => {
+          setSuccess(null);
+        }, 3000);
+      }
+      
+      return Promise.resolve();
+    } catch (err) {
+      console.error('Failed to delete location:', err);
+      const errorMessage = language === 'zh' 
+        ? '删除地点失败，请稍后再试' 
+        : 'Failed to delete location, please try again later';
+      setError(errorMessage);
+      return Promise.reject(new Error(errorMessage));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {/* 简单漂浮组件 */}
@@ -123,8 +162,10 @@ export default function CoupleLocations() {
         onClose={() => setIsModalOpen(false)}
         locations={locations}
         onAddLocation={handleAddLocation}
+        onDeleteLocation={handleDeleteLocation}
         loading={loading}
         error={error}
+        success={success}
       />
     </>
   );

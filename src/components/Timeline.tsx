@@ -10,6 +10,7 @@ import { eventService } from '../services/event-service';
 import { TimelineEvent } from '../services/api-types';
 import { getCoupleSignedUrl } from '../lib/services/coupleOssService';
 import '@/styles/modal.css'; // 确保模态框样式优先加载
+import '@/styles/timeline.css'; // 导入时间轴样式
 
 // Base64 编码的错误占位图，一个简单的灰色背景带有错误图标
 const ERROR_PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjUwIiB2aWV3Qm94PSIwIDAgNDAwIDI1MCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyNTAiIGZpbGw9IiNGMEYwRjAiLz4KICA8cGF0aCBkPSJNMTgyLjUgMTMwLjVMMjAwIDEwMEwyMTcuNSAxMzAuNUgyMzVMMjAwIDc1TDE2NSAxMzAuNUgxODIuNVoiIGZpbGw9IiM5OTk5OTkiLz4KICA8cGF0aCBkPSJNMTY1IDE0MEgyMzVWMTcwSDE2NVYxNDBaIiBmaWxsPSIjOTk5OTk5Ii8+CiAgPHRleHQgeD0iMjAwIiB5PSIyMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzY2NjY2NiI+5Zu+54mH5Yqg6L295aSx6LSlPC90ZXh0Pgo8L3N2Zz4=';
@@ -32,7 +33,7 @@ export default function Timeline() {
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   
   // 每页加载的事件数量
-  const PAGE_SIZE = 6;
+  const PAGE_SIZE = 10;
   
   // 打开创建故事模态框
   const openCreateModal = () => {
@@ -93,6 +94,10 @@ export default function Timeline() {
       setIsLoading(true);
       setError(null);
       
+      // 记录当前滚动位置
+      const scrollPosition = window.scrollY;
+      console.log("记录滚动位置:", scrollPosition, "页码:", pageNumber);
+      
       const params = {
         couple_id: user.couple_id as string,
         page: pageNumber,
@@ -102,6 +107,15 @@ export default function Timeline() {
       
       const response = await eventService.getEvents(params);
       
+      // 添加调试日志，输出API返回的分页信息
+      console.log("API分页信息:", {
+        当前页: response.page,
+        每页数量: response.limit,
+        总记录数: response.total,
+        总页数: response.total_pages,
+        当前返回数据量: response.data.length
+      });
+      
       // 处理图片URL，获取签名URL
       const eventsWithSignedUrls = await Promise.all(response.data.map(async (event) => {
         console.log("处理事件图片:", event.id, event.title);
@@ -109,16 +123,46 @@ export default function Timeline() {
         console.log("处理后的封面图:", event.cover_url);
         return event;
       }));
-      if (pageNumber === 1) {
-        setEvents(eventsWithSignedUrls);
-        // 滚动到顶部
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setEvents(prev => [...prev, ...eventsWithSignedUrls]);
-      }
+      
+      // 更新事件列表，确保正确合并数据
+      setEvents(prev => {
+        // 如果是第一页，替换所有数据
+        if (pageNumber === 1) {
+          // 滚动到顶部
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return eventsWithSignedUrls;
+        } 
+        // 如果是加载更多，合并数据
+        else {
+          const newEvents = [...prev, ...eventsWithSignedUrls];
+          console.log("合并后的事件数:", newEvents.length);
+          
+          // 恢复滚动位置
+          setTimeout(() => {
+            window.scrollTo({ top: scrollPosition });
+            console.log("恢复滚动位置:", scrollPosition);
+          }, 100);
+          
+          return newEvents;
+        }
+      });
       
       setTotalEvents(response.total);
-      setHasMore(response.data.length === PAGE_SIZE && pageNumber < response.total_pages);
+      
+      // 修改hasMore的判断逻辑
+      // 不依赖于events.length，而是直接使用当前页码和API返回信息计算
+      const currentLoadedCount = (pageNumber - 1) * PAGE_SIZE + eventsWithSignedUrls.length;
+      const hasMoreEvents = currentLoadedCount < response.total;
+      
+      console.log("加载更多状态:", {
+        当前页码: pageNumber,
+        当前页数据量: eventsWithSignedUrls.length,
+        已加载总数: currentLoadedCount,
+        总事件数: response.total,
+        是否还有更多: hasMoreEvents
+      });
+      
+      setHasMore(hasMoreEvents);
     } catch (err: any) {
       setError(
         err.response?.data?.message || 
@@ -127,7 +171,7 @@ export default function Timeline() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, language, getSignedImageUrl]);
+  }, [user, language, getSignedImageUrl]); // 移除对events.length的依赖
   
   // 初始加载和搜索条件变化时重新加载
   useEffect(() => {
@@ -164,6 +208,7 @@ export default function Timeline() {
   const handleLoadMore = () => {
     if (hasMore && !isLoading) {
       const nextPage = page + 1;
+      console.log("加载更多 - 页码:", nextPage, "当前事件数:", events.length);
       setPage(nextPage);
       loadEvents(nextPage, searchTerm);
     }
@@ -171,6 +216,12 @@ export default function Timeline() {
   
   return (
     <>
+      {/* 背景装饰元素 */}
+      <div className="romantic-bg">
+        <div className="bg-gradient"></div>
+        <div className="bg-decoration"></div>
+      </div>
+
       {/* 爱的足迹 - Journey Together Section */}
       <CoupleLocations />
       
@@ -191,7 +242,7 @@ export default function Timeline() {
         </form>
         <button className="btn btn-primary create-story-btn" onClick={openCreateModal}>
           <i className="fas fa-plus"></i>
-          <T zh="新建故事" en="New Entry" />
+          <T zh="创建回忆" en="Create Memory" />
         </button>
       </div>
 
@@ -222,7 +273,7 @@ export default function Timeline() {
             />
           </p>
           <button className="btn btn-primary" onClick={openCreateModal}>
-            <T zh="创建故事" en="Create Story" />
+            <T zh="创建回忆" en="Create Memory" />
           </button>
         </div>
       )}
@@ -238,7 +289,7 @@ export default function Timeline() {
                 onClick={() => openDetailModal(event)}
                 role="button"
                 tabIndex={0}
-                aria-label={`查看故事: ${event.title}`}
+                aria-label={`查看回忆: ${event.title}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -273,7 +324,7 @@ export default function Timeline() {
                   <div className="timeline-card-overlay">
                     <div className="view-story-btn">
                       <i className="fas fa-eye"></i>
-                      <span><T zh="查看故事" en="View Story" /></span>
+                      <span><T zh="查看回忆" en="View Memory" /></span>
                     </div>
                   </div>
                 </div>
@@ -337,17 +388,6 @@ export default function Timeline() {
         </div>
       )}
 
-      {/* 回到顶部按钮 - 确保它始终可见并正常工作 */}
-      {events.length > 0 && (
-        <button 
-          className="scroll-to-top-btn" 
-          onClick={scrollToTop}
-          aria-label={language === 'zh' ? '回到顶部' : 'Back to top'}
-          type="button"
-        >
-          <i className="fas fa-arrow-up"></i>
-        </button>
-      )}
 
       {/* 创建故事模态框 */}
       <CreateStoryModal 
@@ -362,406 +402,6 @@ export default function Timeline() {
         onClose={closeDetailModal}
         event={selectedEvent}
       />
-      
-      {/* 添加样式 */}
-      <style jsx>{`
-        .timeline-container {
-          margin-top: 2rem;
-          position: relative;
-        }
-        
-        .timeline-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-          gap: 2rem;
-        }
-        
-        .timeline-card {
-          background: white;
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-          animation: fadeIn 0.5s ease forwards;
-          opacity: 0;
-          cursor: pointer;
-          position: relative;
-          outline: none; /* 移除默认的焦点轮廓 */
-        }
-        
-        .timeline-card:focus {
-          box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 0 0 0 2px var(--primary);
-        }
-        
-        .timeline-card:active {
-          transform: scale(0.98);
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .timeline-card:nth-child(1) { animation-delay: 0.1s; }
-        .timeline-card:nth-child(2) { animation-delay: 0.2s; }
-        .timeline-card:nth-child(3) { animation-delay: 0.3s; }
-        .timeline-card:nth-child(4) { animation-delay: 0.4s; }
-        .timeline-card:nth-child(5) { animation-delay: 0.5s; }
-        .timeline-card:nth-child(6) { animation-delay: 0.6s; }
-        
-        .timeline-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .timeline-card-media {
-          position: relative;
-          height: 200px;
-          overflow: hidden;
-        }
-        
-        .timeline-card-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.5s ease;
-        }
-        
-        .timeline-card:hover .timeline-card-image {
-          transform: scale(1.05);
-        }
-        
-        .timeline-card-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        
-        .timeline-card:hover .timeline-card-overlay {
-          opacity: 1;
-        }
-        
-        .view-story-btn {
-          background: rgba(255, 255, 255, 0.9);
-          color: var(--primary);
-          padding: 10px 20px;
-          border-radius: 30px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 600;
-          transform: translateY(10px);
-          transition: transform 0.3s ease, background-color 0.3s ease;
-        }
-        
-        .timeline-card:hover .view-story-btn {
-          transform: translateY(0);
-        }
-        
-        .timeline-card:active .view-story-btn {
-          background: rgba(255, 255, 255, 1);
-        }
-        
-        .timeline-card-placeholder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: #f5f5f5;
-          color: #ccc;
-          font-size: 3rem;
-        }
-        
-        .timeline-card-date {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-          color: white;
-          padding: 1rem;
-          font-size: 0.9rem;
-          font-weight: 500;
-          z-index: 2;
-        }
-        
-        .timeline-card-content {
-          padding: 1.5rem;
-        }
-        
-        .timeline-card-title {
-          margin: 0 0 0.75rem;
-          font-size: 1.4rem;
-          font-weight: 600;
-          color: var(--dark);
-        }
-        
-        .timeline-card-description {
-          color: #666;
-          font-size: 1rem;
-          line-height: 1.5;
-          margin-bottom: 1.5rem;
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        
-        .timeline-card-footer {
-          display: flex;
-          justify-content: flex-start;
-          align-items: center;
-          padding-top: 0.5rem;
-          border-top: 1px solid #eee;
-        }
-        
-        .timeline-card-location {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #888;
-          font-size: 0.9rem;
-        }
-        
-        .load-more-container {
-          display: flex;
-          justify-content: center;
-          margin-top: 3rem;
-          margin-bottom: 1rem;
-        }
-        
-        .load-more-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          background-color: white;
-          color: var(--primary);
-          border: 2px solid var(--primary);
-          border-radius: 30px;
-          padding: 0.75rem 2rem;
-          font-weight: 600;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        
-        .load-more-btn:hover {
-          background-color: var(--primary);
-          color: white;
-        }
-        
-        .load-more-btn.loading {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-        
-        .loading-spinner-small {
-          width: 20px;
-          height: 20px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          border-left-color: white;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        
-        .no-more-events {
-          color: #888;
-          font-size: 0.9rem;
-          text-align: center;
-          padding: 1rem;
-        }
-        
-        .events-count {
-          text-align: center;
-          color: #888;
-          font-size: 0.9rem;
-          margin-top: 2rem;
-        }
-        
-        .scroll-to-top-btn {
-          position: fixed;
-          bottom: 2rem;
-          right: 2rem;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background-color: var(--primary);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: none;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-          cursor: pointer;
-          transition: all 0.3s ease;
-          z-index: 100;
-        }
-        
-        .scroll-to-top-btn:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        .timeline-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-        
-        .search-filter-group {
-          flex: 1;
-          min-width: 300px;
-        }
-        
-        .search-box {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-        
-        .search-box i {
-          position: absolute;
-          left: 1rem;
-          color: #888;
-        }
-        
-        .search-box input {
-          width: 100%;
-          padding: 0.75rem 1rem 0.75rem 2.5rem;
-          border: 1px solid #ddd;
-          border-radius: 30px;
-          font-size: 1rem;
-          outline: none;
-          transition: all 0.3s ease;
-        }
-        
-        .search-box input:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 2px rgba(106, 123, 217, 0.1);
-        }
-        
-        .search-btn {
-          position: absolute;
-          right: 5px;
-          background-color: var(--primary);
-          color: white;
-          border: none;
-          border-radius: 30px;
-          padding: 0.5rem 1rem;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        
-        .search-btn:hover {
-          background-color: var(--primary-dark);
-        }
-        
-        .create-story-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          white-space: nowrap;
-        }
-        
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 3rem;
-        }
-        
-        .loading-spinner {
-          width: 50px;
-          height: 50px;
-          border: 4px solid rgba(106, 123, 217, 0.1);
-          border-left-color: var(--primary);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin-bottom: 1rem;
-        }
-        
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        
-        .error-message {
-          background-color: #fff3f3;
-          color: var(--danger);
-          padding: 1rem;
-          border-radius: 8px;
-          margin-bottom: 2rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        
-        .empty-state {
-          text-align: center;
-          padding: 4rem 2rem;
-          background-color: white;
-          border-radius: 16px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-        }
-        
-        .empty-state i {
-          font-size: 3rem;
-          color: #ddd;
-          margin-bottom: 1rem;
-        }
-        
-        .empty-state h3 {
-          font-size: 1.5rem;
-          margin-bottom: 1rem;
-          color: var(--dark);
-        }
-        
-        .empty-state p {
-          color: #888;
-          margin-bottom: 2rem;
-        }
-        
-        @media (max-width: 768px) {
-          .timeline-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .timeline-header {
-            flex-direction: column;
-            align-items: stretch;
-          }
-          
-          .search-filter-group {
-            width: 100%;
-          }
-          
-          .create-story-btn {
-            width: 100%;
-          }
-        }
-      `}</style>
     </>
   );
 } 

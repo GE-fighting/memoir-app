@@ -5,7 +5,7 @@
   left: 0; 
   right: 0; 
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,6 +13,8 @@
   padding: 20px;
   opacity: 1;
   transition: opacity 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .story-modal-overlay.closing { 
@@ -21,22 +23,35 @@
 
 .story-modal-container {
   display: flex;
-  width: 90%;
-  max-width: 1100px;
+  width: 95%;
+  max-width: 1300px;
   height: 85vh;
   background-color: #fff;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-  transition: opacity 0.3s ease;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  animation: modalAppear 0.5s forwards;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .story-modal-container.closing { 
-  opacity: 0; 
+  opacity: 0;
+  transform: scale(0.95);
 }
 
 .story-modal-media {
-  flex: 3;
+  flex: 5;
   background-color: #000;
   position: relative;
   display: flex;
@@ -46,96 +61,213 @@
 }
 
 .story-modal-content {
-  flex: 2;
-  max-width: 380px;
-  padding: 25px;
+  flex: 4;
+  min-width: 420px;
+  max-width: 550px;
+  padding: 40px;
   position: relative;
   overflow-y: auto;
-  background-color: #fff;
+  background-color: #f8f6f2;
+  background-image: 
+    linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(245,242,238,0.8) 100%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23d1c7b7' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+  background-position: center;
+  background-size: cover;
+  border-left: 1px solid rgba(0,0,0,0.05);
+  box-shadow: inset 5px 0 15px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  /* 完全隐藏滚动条，同时保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  /* 添加装饰元素 */
+  position: relative;
+}
+
+/* 添加装饰角落 */
+.story-modal-content::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 40px;
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L40 0 L40 5 L5 5 L5 40 L0 40 Z' fill='rgba(106, 123, 217, 0.15)'/%3E%3C/svg%3E");
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.story-modal-content::after {
+  content: '';
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 40 L0 40 L0 35 L35 35 L35 0 L40 0 Z' fill='rgba(106, 123, 217, 0.15)'/%3E%3C/svg%3E");
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* 隐藏WebKit浏览器的滚动条 */
+.story-modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
 }
 
 .story-close-button {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.3);
   border: none;
-  font-size: 1.4rem;
-  color: #999;
+  font-size: 1.2rem;
+  color: #666;
   cursor: pointer;
   z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .story-close-button:hover { 
-  color: #333; 
+  color: #333;
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.05);
 }
 
 .story-header { 
-  margin-bottom: 20px; 
+  margin-bottom: 30px;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+.story-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(to right, var(--primary, #6a7bd9), rgba(106, 123, 217, 0.2));
+  border-radius: 3px;
 }
 
 .story-title { 
-  font-size: 1.6rem; 
-  font-weight: 500; 
-  margin: 0 0 8px; 
-  color: #333; 
+  font-size: 2rem; 
+  font-weight: 600; 
+  margin: 0 0 15px; 
+  color: #2a2a2a;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
 }
 
 .story-date { 
-  font-size: 0.9rem; 
-  color: #999; 
+  font-size: 1rem; 
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.story-date::before {
+  content: '\f073';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--primary, #6a7bd9);
 }
 
 .story-body { 
-  margin-bottom: 20px; 
+  margin-bottom: 30px;
+  flex: 1;
+  position: relative;
+  padding: 20px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .story-content { 
-  font-size: 0.95rem; 
-  line-height: 1.5; 
-  color: #444; 
-  white-space: pre-wrap; 
+  font-size: 1.05rem; 
+  line-height: 1.7; 
+  color: #333; 
+  white-space: pre-wrap;
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
 }
 
 .story-locations { 
-  margin-top: 20px; 
-  padding-top: 15px; 
-  border-top: 1px solid #eee; 
+  margin-top: 30px; 
+  padding-top: 25px; 
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  position: relative;
 }
 
 .section-title { 
-  font-size: 1rem; 
-  font-weight: 500; 
-  color: #333; 
-  margin: 0 0 12px; 
+  font-size: 1.2rem; 
+  font-weight: 600; 
+  color: #2a2a2a; 
+  margin: 0 0 16px; 
   display: flex; 
   align-items: center; 
-  gap: 6px; 
+  gap: 10px; 
+  text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
+}
+
+.section-title i {
+  color: var(--primary, #6a7bd9);
+  font-size: 1rem;
+  filter: drop-shadow(1px 1px 0 rgba(255,255,255,0.8));
 }
 
 .locations-list { 
   display: flex; 
   flex-direction: column; 
-  gap: 8px; 
+  gap: 12px; 
 }
 
 .location-item { 
   display: flex; 
   flex-direction: column; 
-  padding: 8px 12px; 
-  background-color: #f9f9f9; 
-  border-radius: 4px; 
+  padding: 14px 18px; 
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  border-left: 3px solid var(--primary, #6a7bd9);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.location-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
 .location-name { 
-  font-weight: 500; 
-  color: #333; 
+  font-weight: 600; 
+  color: #2a2a2a;
+  font-size: 1.05rem;
 }
 
 .location-description { 
-  font-size: 0.85rem; 
-  color: #777; 
-  margin-top: 3px; 
+  font-size: 0.9rem; 
+  color: #555; 
+  margin-top: 6px;
+  line-height: 1.5;
 }
 
 .media-container {
@@ -155,7 +287,8 @@
   height: auto;
   object-fit: contain;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.5s ease;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
 }
 
 .media-image.loaded { 
@@ -188,12 +321,27 @@
 }
 
 .keyboard-shortcuts {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-  font-size: 0.85rem;
-  color: #999;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.9rem;
+  color: #888;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 12px 15px;
+  border-radius: 8px;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.keyboard-shortcuts i {
+  color: #999;
+  font-size: 0.85rem;
 }
 
 .media-placeholder, 
@@ -245,13 +393,11 @@
   background-color: rgba(255, 255, 255, 0.15); 
   color: white; 
   border: none; 
-  border-radius: 4px;
-  padding: 8px 18px; 
-  font-size: 0.85rem; 
-  font-weight: 500; 
+  border-radius: 6px;
+  padding: 10px 20px; 
+  font-size: 0.9rem; 
   cursor: pointer;
-  transition: background-color 0.2s; 
-  margin-top: 14px;
+  transition: all 0.2s ease;
 }
 
 .retry-button:hover { 
@@ -264,83 +410,142 @@
   } 
 }
 
-/* 媒体导航按钮样式 */
 .media-nav-button {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
   border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 5;
-  transition: background-color 0.2s, opacity 0.2s;
+  transition: all 0.2s ease;
   opacity: 0.7;
 }
 
 .media-nav-button:hover {
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
   opacity: 1;
 }
 
 .media-nav-button i {
-  font-size: 1.2rem;
-  color: #000;
+  font-size: 1rem;
 }
 
 .media-nav-prev {
-  left: 16px;
+  left: 20px;
 }
 
 .media-nav-next {
-  right: 16px;
+  right: 20px;
 }
 
-/* 在小屏幕上调整按钮大小 */
-@media (max-width: 768px) {
+.media-dots-nav {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  z-index: 5;
+}
+
+.media-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.media-dot:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.media-dot.active {
+  background-color: white;
+  transform: scale(1.2);
+}
+
+@media (max-width: 992px) {
+  .story-modal-container {
+    flex-direction: column;
+    height: 90vh;
+    width: 95%;
+  }
+  
+  .story-modal-media {
+    flex: none;
+    height: 40%;
+  }
+  
+  .story-modal-content {
+    flex: none;
+    height: 60%;
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+    padding: 25px;
+  }
+  
+  .story-title {
+    font-size: 1.6rem;
+  }
+  
   .media-nav-button {
     width: 36px;
     height: 36px;
   }
   
-  .media-nav-button i {
-    font-size: 1rem;
+  .media-nav-prev {
+    left: 10px;
+  }
+  
+  .media-nav-next {
+    right: 10px;
   }
 }
 
-/* 圆点导航指示器样式 */
-.media-dots-nav {
-  position: absolute;
-  bottom: 16px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  z-index: 5;
-}
-
-.media-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.5);
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
-}
-
-.media-dot:hover {
-  transform: scale(1.2);
-}
-
-.media-dot.active {
-  background-color: #ffffff;
-  transform: scale(1.2);
+@media (max-width: 576px) {
+  .story-modal-container {
+    height: 95vh;
+    width: 100%;
+    border-radius: 0;
+  }
+  
+  .story-modal-overlay {
+    padding: 0;
+  }
+  
+  .story-modal-media {
+    height: 35%;
+  }
+  
+  .story-modal-content {
+    height: 65%;
+    padding: 20px;
+  }
+  
+  .story-title {
+    font-size: 1.4rem;
+  }
+  
+  .story-content {
+    font-size: 1rem;
+  }
+  
+  .story-header::after {
+    width: 50px;
+  }
 } 

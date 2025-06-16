@@ -10,8 +10,10 @@ interface LocationModalProps {
   onClose: () => void;
   locations: Location[];
   onAddLocation: (location: Omit<CreateLocationRequest, 'couple_id'>) => Promise<void>;
+  onDeleteLocation?: (id: string) => Promise<void>;
   loading: boolean;
   error: string | null;
+  success?: string | null;
 }
 
 // 预设的城市颜色
@@ -31,8 +33,10 @@ export default function LocationModal({
   onClose,
   locations,
   onAddLocation,
+  onDeleteLocation,
   loading,
-  error
+  error,
+  success
 }: LocationModalProps) {
   const { language } = useLanguage();
   const [showAddForm, setShowAddForm] = useState(false);
@@ -52,6 +56,11 @@ export default function LocationModal({
   const [searchError, setSearchError] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // 删除确认相关状态
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [locationToDelete, setLocationToDelete] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // 城市搜索处理函数
   const handleCitySearch = async (query: string) => {
@@ -204,6 +213,34 @@ export default function LocationModal({
     return CITY_COLORS[index % CITY_COLORS.length];
   };
 
+  // 处理删除地点
+  const handleDelete = async (id: string) => {
+    setLocationToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  // 确认删除
+  const confirmDelete = async () => {
+    if (locationToDelete && onDeleteLocation) {
+      try {
+        setDeletingId(locationToDelete);
+        await onDeleteLocation(locationToDelete);
+        setShowDeleteConfirm(false);
+        setLocationToDelete(null);
+      } catch (err) {
+        console.error('Failed to delete location:', err);
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  };
+
+  // 取消删除
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setLocationToDelete(null);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -232,6 +269,16 @@ export default function LocationModal({
         {error && (
           <div className="error-message text-red-500 p-4 border-b">
             {error}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {success && (
+          <div className="success-message text-green-500 p-4 border-b bg-green-50 animate-fadeIn">
+            <div className="flex items-center">
+              <i className="fas fa-check-circle mr-2"></i>
+              {success}
+            </div>
           </div>
         )}
 
@@ -373,6 +420,42 @@ export default function LocationModal({
           </div>
         )}
 
+        {/* 删除确认对话框 */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5 animate-fadeIn">
+              <h3 className="text-lg font-medium mb-3">
+                <T zh="确认删除" en="Confirm Deletion" />
+              </h3>
+              <p className="mb-4">
+                <T 
+                  zh="确定要删除这个地点吗？此操作无法撤销。" 
+                  en="Are you sure you want to delete this location? This action cannot be undone." 
+                />
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button 
+                  onClick={cancelDelete}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  <T zh="取消" en="Cancel" />
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <T zh="删除中..." en="Deleting..." />
+                  ) : (
+                    <T zh="确认删除" en="Delete" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* City List */}
         <div className="flex-1 overflow-auto p-4">
           {loading && !locations.length ? (
@@ -400,6 +483,30 @@ export default function LocationModal({
                       {location.created_at ? new Date(location.created_at).toLocaleDateString() : '-'}
                     </div>
                   </div>
+                  {onDeleteLocation && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(location.id);
+                      }}
+                      className={`p-2 rounded-full transition-all transform duration-200 relative group ${
+                        deletingId === location.id 
+                          ? 'bg-gray-100 cursor-not-allowed' 
+                          : 'text-gray-400 hover:text-red-500 hover:bg-red-50 hover:scale-110'
+                      }`}
+                      aria-label={language === 'zh' ? '删除' : 'Delete'}
+                      disabled={deletingId === location.id}
+                    >
+                      {deletingId === location.id ? (
+                        <i className="fas fa-spinner fa-spin text-gray-500"></i>
+                      ) : (
+                        <i className="fas fa-trash-alt"></i>
+                      )}
+                      <span className="absolute right-full mr-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        <T zh="删除" en="Delete" />
+                      </span>
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

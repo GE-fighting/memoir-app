@@ -5,7 +5,7 @@ import {
   Location, 
   CreateLocationRequest,
   PaginationParams, 
-  PaginatedResponse 
+  ApiResponse
 } from "./api-types";
 
 /**
@@ -29,14 +29,13 @@ export const locationService = {
   },
 
   /**
-   * 获取单个位置
+   * 删除单个位置
    * @param id 位置ID
-   * @returns 位置信息
-   * @deprecated 后端暂不支持此操作
+   * @returns 空响应
    */
-  // getLocation: async (id: number): Promise<Location> => {
-  //   return apiClient.get<Location>(`/locations/${id}`);
-  // },
+    deleteLocation: async (id: string): Promise<ApiResponse<void>> => {
+        return apiClient.delete<ApiResponse<void>>(`/locations/${id}`);
+      },
 
   /**
    * 创建位置

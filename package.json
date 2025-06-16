@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
+    "@uiw/react-amap": "^7.1.8",
+    "@uiw/react-amap-api-loader": "^7.1.8",
+    "@uiw/react-amap-map": "^7.1.8",
     "ali-oss": "^6.23.0",
     "axios": "^1.9.0",
     "framer-motion": "^12.12.1",
