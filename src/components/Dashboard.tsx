@@ -14,29 +14,49 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { T, useLanguage } from './LanguageContext';
+import { dashboardService } from '../services/dashboard-service';
+import type { DashboardDTO } from '../services/api-types';
 
 export default function Dashboard() {
   const { language } = useLanguage();
-  
+  const [dashboardData, setDashboardData] = useState<DashboardDTO | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    dashboardService.getDashboardData()
+      .then(data => {
+        setDashboardData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('获取仪表盘数据失败');
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div><T zh="正在加载仪表盘数据..." en="Loading dashboard data..." /></div>;
+  }
+  if (error) {
+    return <div>{error}</div>;
+  }
+
   return (
     <>
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-header">
             <div className="stat-title">
-              <T zh="时间轴条目" en="TIMELINE ENTRIES" />
+              <T zh="回忆数量" en="TIMELINE ENTRIES" />
             </div>
             <div className="stat-icon purple">
               <i className="fas fa-clock-rotate-left"></i>
             </div>
           </div>
-          <div className="stat-value">124</div>
-          <div className="stat-change positive">
-            <i className="fas fa-arrow-up"></i>
-            <T zh="较上月增长8%" en="8% since last month" />
-          </div>
+          <div className="stat-value">{dashboardData?.story_count ?? '-'}</div>
         </div>
         <div className="stat-card">
           <div className="stat-header">
@@ -47,40 +67,41 @@ export default function Dashboard() {
               <i className="fas fa-camera"></i>
             </div>
           </div>
-          <div className="stat-value">2,567</div>
-          <div className="stat-change positive">
-            <i className="fas fa-arrow-up"></i>
-            <T zh="较上月增长12%" en="12% since last month" />
-          </div>
+          <div className="stat-value">{dashboardData?.media_count ?? '-'}</div>
         </div>
         <div className="stat-card">
           <div className="stat-header">
             <div className="stat-title">
-              <T zh="创建的相册" en="ALBUMS CREATED" />
+              <T zh="相册数量" en="ALBUMS CREATED" />
             </div>
             <div className="stat-icon blue">
               <i className="fas fa-images"></i>
             </div>
           </div>
-          <div className="stat-value">42</div>
-          <div className="stat-change positive">
-            <i className="fas fa-arrow-up"></i>
-            <T zh="较上月增长4%" en="4% since last month" />
-          </div>
+          <div className="stat-value">{dashboardData?.album_count ?? '-'}</div>
         </div>
         <div className="stat-card">
           <div className="stat-header">
             <div className="stat-title">
               <T zh="相伴天数" en="DAYS TOGETHER" />
             </div>
-            <div className="stat-icon green">
+            <div className="stat-icon red">
               <i className="fas fa-heart"></i>
             </div>
           </div>
-          <div className="stat-value">748</div>
-          <div className="stat-change positive">
+          <div className="stat-value">{dashboardData?.couple_days ?? '-'}</div>
+          <div className="stat-change" style={{ color: 'var(--secondary)', fontWeight: 600 }}>
             <i className="fas fa-calendar"></i>
-            <T zh="2年18天" en="2 years, 18 days" />
+            {/* 只在有年时显示年，否则只显示天 */}
+            {dashboardData && dashboardData.couple_days !== undefined ? (
+              (() => {
+                const years = Math.floor(dashboardData.couple_days / 365);
+                const days = dashboardData.couple_days % 365;
+                return years > 0
+                  ? `${years}年${days}天`
+                  : `${days}天`;
+              })()
+            ) : '-'}
           </div>
         </div>
       </div>

@@ -356,6 +356,10 @@ input:focus, select:focus, textarea:focus {
     background-color: var(--success);
   }
 
+  .stat-icon.red {
+    background-color: #e74c3c; /* Elegant red, can be replaced with a CSS variable if defined */
+  }
+
   .stat-value {
     font-size: 2rem;
     font-weight: 700;
@@ -371,7 +375,8 @@ input:focus, select:focus, textarea:focus {
   }
 
   .stat-change.positive {
-    color: var(--success);
+    color: #27ae60; /* 更明亮的绿色 */
+    font-weight: 600;
   }
 
   .stat-change.negative {

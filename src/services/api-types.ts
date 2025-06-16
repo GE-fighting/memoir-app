@@ -172,6 +172,16 @@ export interface UpdateWishlistItemStatusRequest {
   status: WishlistItemStatus;
 }
 
+
+// 仪表盘相关类型
+export interface DashboardDTO{
+  story_count: number;
+  media_count: number;
+  album_count: number;
+  couple_days: number;
+  locations: Location[];
+}
+
 // 分页相关类型
 export interface PaginationParams {
   page?: number;
