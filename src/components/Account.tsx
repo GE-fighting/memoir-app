@@ -3,16 +3,38 @@
 import React, { useEffect, useState } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import { userService } from '../services/user-service';
+import { coupleService, CoupleInfoDTO } from '@/services/couple-service';
 
 export default function Account() {
   const { language } = useLanguage();
-  const [hasCouple, setHasCouple] = useState<boolean>(true);
+  const [hasCouple, setHasCouple] = useState<boolean>(false);
+  const [anniversaryDate, setAnniversaryDate] = useState<string>("2021-08-18");
+  const [destinKey, setDestinKey] = useState<string>("");
+  const [coupleInfo, setCoupleInfo] = useState<CoupleInfoDTO | null>(null);
+  
+  // 生成密钥函数
+  const generateDestinKey = (date: string) => {
+    // 以memoir开通，- 间隔，后面跟数字+字母的十六位
+    const randomString = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return `memoir-${date}-${randomString}`;
+  };
   
   useEffect(() => {
     const checkCoupleStatus = async () => {
       try {
         const exists = await userService.existCouple();
         setHasCouple(exists);
+        
+        // 如果存在情侣关系，获取情侣信息
+        if (exists) {
+          try {
+            const info = await coupleService.getCoupleInfo();
+            setCoupleInfo(info);
+            setAnniversaryDate(info.anniversary_date);
+          } catch (error) {
+            console.error('Failed to get couple info:', error);
+          }
+        }
       } catch (error) {
         console.error('Failed to check couple status:', error);
       }
@@ -21,42 +43,86 @@ export default function Account() {
     checkCoupleStatus();
   }, []);
   
+  // 初始化和更新密钥
+  useEffect(() => {
+    const newKey = generateDestinKey(anniversaryDate);
+    setDestinKey(newKey);
+  }, [anniversaryDate]);
+  
+  // 处理保存更改
+  const handleSaveChanges = async () => {
+    try {   
+      // 创建情侣关系
+      const coupleInfo = await coupleService.createCouple({
+        pair_token: destinKey,
+        anniversary_date: anniversaryDate
+      });
+      
+      // 更新状态
+      if (coupleInfo && coupleInfo.couple_id) {
+        setHasCouple(true);
+        setCoupleInfo(coupleInfo);
+      }     
+      
+      // 显示成功消息
+      alert('情侣关系创建成功!');
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      alert('保存失败，请重试!');
+    }
+  };
+  
   return (
     <div className="account-container">
       <div className="account-card">
         <h2 className="card-title">
           <T zh="爱的记忆" en="Love Story" />
         </h2>
-        <div className="couple-info">
-          <div className="couple-avatar-group">
-            <div className="couple-avatar">A</div>
-            <div className="couple-avatar">J</div>
-          </div>
-          <div className="couple-details">
-            <div className="couple-name">Alex & Jamie</div>
-            <div className="couple-date">
-              <i className="fas fa-heart"></i>
-              <T 
-                zh="在一起自2021年8月18日（748天）" 
-                en="Together since August 18, 2021 (748 days)" 
-              />
+        
+        {hasCouple && coupleInfo && (
+          <div className="couple-info">
+            <div className="couple-avatar-group">
+              <div className="couple-avatar">{coupleInfo.couple_name.charAt(0)}</div>
+              <div className="couple-avatar">{coupleInfo.couple_name.length > 1 ? coupleInfo.couple_name.charAt(1) : ''}</div>
+            </div>
+            <div className="couple-details">
+              <div className="couple-name">{coupleInfo.couple_name}</div>
+              <div className="couple-date">
+                <i className="fas fa-heart"></i>
+                <T 
+                  zh={`在一起自${coupleInfo.anniversary_date}（${coupleInfo.couple_days}天）`} 
+                  en={`Together since ${coupleInfo.anniversary_date} (${coupleInfo.couple_days} days)`} 
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         <div className="form-section">
           <div className="form-group">
             <label><T zh="缘定之日" en="Anniversary Date" /></label>
-            <input type="date" defaultValue="2021-08-18" className="form-input" />
+            <input 
+              type="date" 
+              value={anniversaryDate}
+              onChange={(e) => setAnniversaryDate(e.target.value)}
+              disabled={hasCouple}
+              className="form-input" 
+            />
           </div>
           
           <div className="form-group">
-            <label><T zh="Destin密钥" en="Destin Key" /></label>
-            <input type="text" defaultValue="LOVE-ALEX-JAMIE-2021" readOnly className="form-input" />
+            <label><T zh="memoir密钥" en="Destin Key" /></label>
+            <input 
+              type="text" 
+              value={destinKey}
+              onChange={(e) => setDestinKey(e.target.value)}
+              readOnly={hasCouple}
+              className="form-input" 
+            />
           </div>
           
           {!hasCouple && (
-            <button className="btn btn-primary">
+            <button className="btn btn-primary" onClick={handleSaveChanges}>
               <i className="fas fa-save"></i>
               <T zh="步入爱河" en="Save Changes" />
             </button>

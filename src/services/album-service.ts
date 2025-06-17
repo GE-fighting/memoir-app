@@ -37,6 +37,13 @@ export interface CreateAlbumMediaParams {
   thumbnail_url: string;
   description?: string;
 }
+/**
+ * 
+ */
+export interface DeleteCoupleAlbumPhotosRequest {
+  album_id: string;
+  photo_video_ids: string[];
+}
 
 /**
  * 相册服务类
@@ -112,6 +119,15 @@ class AlbumService {
   async uploadMediaToAlbum(params: CreateAlbumMediaParams): Promise<any> {
     return apiClient.post<any>('/albums/media', params);
   }
+
+    /**
+   * 删除情侣相册中的照片或视频
+   * @param params 删除请求参数
+   * @returns 删除结果
+   */
+  async deleteCoupleAlbumPhotos(params: DeleteCoupleAlbumPhotosRequest): Promise<void> {
+    return apiClient.post<void>('/albums/deletePhotos', params);
+  };
 }
 
 // 导出相册服务单例

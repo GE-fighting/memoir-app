@@ -113,6 +113,7 @@ export interface UploadResult {
 }
 
 export interface FileListItem {
+  id?: string;  // 添加可选的id字段，用于媒体文件标识
   name: string;
   url: string;
   lastModified: string;
@@ -340,6 +341,7 @@ export const listFiles = async (): Promise<FileListItem[]> => {
       }
       
       return {
+        id: obj.name,
         name: fileName,
         url: url,
         lastModified: obj.lastModified,

@@ -15,6 +15,47 @@ import '@/styles/timeline.css'; // 导入时间轴样式
 // Base64 编码的错误占位图，一个简单的灰色背景带有错误图标
 const ERROR_PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjUwIiB2aWV3Qm94PSIwIDAgNDAwIDI1MCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyNTAiIGZpbGw9IiNGMEYwRjAiLz4KICA8cGF0aCBkPSJNMTgyLjUgMTMwLjVMMjAwIDEwMEwyMTcuNSAxMzAuNUgyMzVMMjAwIDc1TDE2NSAxMzAuNUgxODIuNVoiIGZpbGw9IiM5OTk5OTkiLz4KICA8cGF0aCBkPSJNMTY1IDE0MEgyMzVWMTcwSDE2NVYxNDBaIiBmaWxsPSIjOTk5OTk5Ii8+CiAgPHRleHQgeD0iMjAwIiB5PSIyMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzY2NjY2NiI+5Zu+54mH5Yqg6L295aSx6LSlPC90ZXh0Pgo8L3N2Zz4=';
 
+// 自定义 Hook，用于监听窗口大小变化
+function useWindowSize() {
+  // 初始化时使用默认值，防止服务端渲染错误
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768
+  });
+
+  // 创建防抖函数，避免频繁触发窗口大小变化事件
+  const debounce = (func: Function, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func(...args), delay);
+    };
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // 定义窗口大小变化处理函数（带防抖）
+    const handleResize = debounce(() => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    }, 200); // 200ms 防抖延迟
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', handleResize);
+    
+    // 初始化一次，确保初始值正确
+    handleResize();
+    
+    // 清理函数
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowSize;
+}
+
 export default function Timeline() {
   const { language } = useLanguage();
   const { user } = useAuth();
@@ -32,29 +73,54 @@ export default function Timeline() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   
-  // 每页加载的事件数量
-  const PAGE_SIZE = 10;
+  // 获取窗口大小
+  const windowSize = useWindowSize();
   
-  // 打开创建故事模态框
-  const openCreateModal = () => {
-    setIsCreateModalOpen(true);
-  };
+  // 处理图片URL，获取签名URL
+  const getSignedImageUrl = useCallback(async (url: string) => {
+    if (!url) return ERROR_PLACEHOLDER_IMAGE;
+    return getCoupleSignedUrl(url);
+  }, []);
   
-  // 关闭创建故事模态框
-  const closeCreateModal = () => {
-    setIsCreateModalOpen(false);
-  };
-
-  // 打开故事详情模态框
-  const openDetailModal = (event: TimelineEvent) => {
-    setSelectedEvent(event);
-    setIsDetailModalOpen(true);
-  };
+  // 根据窗口大小计算每页加载的事件数量
+  const calculatePageSize = useCallback((width: number) => {
+    // 基础卡片单位大小（预估一个卡片占据的宽度）
+    const baseCardWidth = 280; // 假设每个卡片大约需要280px宽度
+    const baseCardHeight = 340; // 假设每个卡片大约需要340px高度
+    
+    // 计算每行能放几个卡片（取整）
+    const cardsPerRow = Math.max(1, Math.floor(width / baseCardWidth));
+    
+    // 计算大约能显示几行（考虑到其他UI元素，只取可视区域的70%）
+    const availableHeight = windowSize.height * 0.7;
+    const rowsVisible = Math.max(1, Math.floor(availableHeight / baseCardHeight));
+    
+    // 计算屏幕上可以舒适显示的卡片数量
+    let pageSize = cardsPerRow * rowsVisible;
+    
+    // 根据屏幕大小分类设置基础值
+    if (width < 768) {
+      // 移动设备
+      pageSize = Math.max(4, Math.min(pageSize, 6));
+    } else if (width < 1024) {
+      // 平板设备
+      pageSize = Math.max(6, Math.min(pageSize, 12));
+    } else if (width < 1440) {
+      // 桌面设备
+      pageSize = Math.max(8, Math.min(pageSize, 16));
+    } else {
+      // 大屏设备
+      pageSize = Math.max(12, Math.min(pageSize, 24));
+    }
+    
+    // 返回偶数值，使布局更加均衡
+    return Math.floor(pageSize / 2) * 2;
+  }, [windowSize.height]);
   
-  // 关闭故事详情模态框
-  const closeDetailModal = () => {
-    setIsDetailModalOpen(false);
-  };
+  // 动态计算的每页数量
+  const [pageSize, setPageSize] = useState(() => calculatePageSize(
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  ));
   
   // 格式化日期
   const formatDate = (dateString: string) => {
@@ -74,12 +140,6 @@ export default function Timeline() {
     }
   };
   
-  // 处理图片URL，获取签名URL
-  const getSignedImageUrl = useCallback(async (url: string) => {
-    if (!url) return ERROR_PLACEHOLDER_IMAGE;
-    return getCoupleSignedUrl(url);
-  }, []);
-  
   // 截取内容前10个字符
   const truncateContent = (content: string) => {
     if (!content) return "";
@@ -87,7 +147,7 @@ export default function Timeline() {
   };
   
   // 加载事件数据
-  const loadEvents = useCallback(async (pageNumber: number, searchQuery: string = "") => {
+  const loadEvents = useCallback(async (pageNumber: number, searchQuery: string = "", customPageSize?: number) => {
     if (!user) return;
     
     try {
@@ -96,12 +156,13 @@ export default function Timeline() {
       
       // 记录当前滚动位置
       const scrollPosition = window.scrollY;
-      console.log("记录滚动位置:", scrollPosition, "页码:", pageNumber);
+      const currentPageSize = customPageSize || pageSize;
+      console.log("记录滚动位置:", scrollPosition, "页码:", pageNumber, "每页数量:", currentPageSize);
       
       const params = {
         couple_id: user.couple_id as string,
         page: pageNumber,
-        page_size: PAGE_SIZE,
+        page_size: currentPageSize,
         title: searchQuery || undefined
       };
       
@@ -151,7 +212,7 @@ export default function Timeline() {
       
       // 修改hasMore的判断逻辑
       // 不依赖于events.length，而是直接使用当前页码和API返回信息计算
-      const currentLoadedCount = (pageNumber - 1) * PAGE_SIZE + eventsWithSignedUrls.length;
+      const currentLoadedCount = (pageNumber - 1) * currentPageSize + eventsWithSignedUrls.length;
       const hasMoreEvents = currentLoadedCount < response.total;
       
       console.log("加载更多状态:", {
@@ -171,13 +232,51 @@ export default function Timeline() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, language, getSignedImageUrl]); // 移除对events.length的依赖
+  }, [user, language, getSignedImageUrl, pageSize]);
+  
+  // 窗口大小变化时重新计算页面大小
+  useEffect(() => {
+    const newPageSize = calculatePageSize(windowSize.width);
+    
+    // 仅当页面大小变化时才更新
+    if (newPageSize !== pageSize) {
+      console.log(`窗口大小变化: ${windowSize.width}x${windowSize.height}, 调整每页数量: ${pageSize} -> ${newPageSize}`);
+      setPageSize(newPageSize);
+      
+      // 重置到第一页并重新加载
+      if (events.length > 0) {
+        setPage(1);
+        loadEvents(1, searchTerm, newPageSize);
+      }
+    }
+  }, [windowSize, calculatePageSize, pageSize, searchTerm, events.length, loadEvents]);
   
   // 初始加载和搜索条件变化时重新加载
   useEffect(() => {
     setPage(1);
     loadEvents(1, searchTerm);
   }, [searchTerm, loadEvents]);
+  
+  // 打开创建故事模态框
+  const openCreateModal = () => {
+    setIsCreateModalOpen(true);
+  };
+  
+  // 关闭创建故事模态框
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  // 打开故事详情模态框
+  const openDetailModal = (event: TimelineEvent) => {
+    setSelectedEvent(event);
+    setIsDetailModalOpen(true);
+  };
+  
+  // 关闭故事详情模态框
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+  };
   
   // 处理搜索输入
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,6 +298,12 @@ export default function Timeline() {
     closeCreateModal();
   };
   
+  // 故事删除成功的回调
+  const handleStoryDeleted = () => {
+    setPage(1);
+    loadEvents(1, searchTerm);
+  };
+  
   // 滚动到顶部
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -208,7 +313,7 @@ export default function Timeline() {
   const handleLoadMore = () => {
     if (hasMore && !isLoading) {
       const nextPage = page + 1;
-      console.log("加载更多 - 页码:", nextPage, "当前事件数:", events.length);
+      console.log("加载更多 - 页码:", nextPage, "当前事件数:", events.length, "每页数量:", pageSize);
       setPage(nextPage);
       loadEvents(nextPage, searchTerm);
     }
@@ -245,6 +350,16 @@ export default function Timeline() {
           <T zh="创建回忆" en="Create Memory" />
         </button>
       </div>
+
+      {/* 调试信息 - 在生产环境可以移除 */}
+      {/* 
+      <div className="debug-info" style={{ fontSize: '12px', color: '#999', margin: '5px 0', textAlign: 'center' }}>
+        <T 
+          zh={`屏幕尺寸: ${windowSize.width}x${windowSize.height}, 每页加载: ${pageSize} 条`}
+          en={`Screen size: ${windowSize.width}x${windowSize.height}, Items per page: ${pageSize}`}
+        />
+      </div>
+      */}
 
       {/* 错误提示 */}
       {error && (
@@ -401,6 +516,7 @@ export default function Timeline() {
         isOpen={isDetailModalOpen}
         onClose={closeDetailModal}
         event={selectedEvent}
+        onDeleted={handleStoryDeleted}
       />
     </>
   );

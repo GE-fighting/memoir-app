@@ -63,7 +63,7 @@ export const eventService = {
    * @param id 事件ID
    * @returns 操作结果
    */
-  deleteEvent: async (id: number): Promise<void> => {
+  deleteEvent: async (id: string): Promise<void> => {
     return apiClient.delete<void>(`/events/${id}`);
   },
 }; 

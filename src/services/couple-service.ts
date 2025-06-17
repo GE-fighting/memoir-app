@@ -1,7 +1,20 @@
 "use client";
 
 import { apiClient } from "./api-client";
-import { Couple, CoupleSettings } from "./api-types";
+
+export interface CoupleInfoDTO {
+  couple_id: string;
+  couple_name: string;
+  couple_days: number;
+  anniversary_date: string
+}
+
+export interface CreateCoupleRequest {
+  pair_token: string;
+  anniversary_date: string;
+}
+
+
 
 /**
  * 伴侣服务
@@ -9,36 +22,19 @@ import { Couple, CoupleSettings } from "./api-types";
  */
 export const coupleService = {
   /**
-   * 获取当前用户的伴侣关系信息
-   * @returns 伴侣关系信息
+   * 创建情侣关系
+   * @param param 
+   * @returns 
    */
-  getCouple: async (): Promise<Couple> => {
-    return apiClient.get<Couple>("/couples");
+  createCouple: async (param: CreateCoupleRequest): Promise<CoupleInfoDTO> => {
+    return apiClient.post<CoupleInfoDTO>("/couple/create", param)
   },
 
   /**
-   * 更新伴侣关系信息
-   * @param coupleData 伴侣关系数据
-   * @returns 更新后的伴侣关系信息
+   * 获取情侣数据
+   * @returns 
    */
-  updateCouple: async (coupleData: Partial<Couple>): Promise<Couple> => {
-    return apiClient.put<Couple>("/couples", coupleData);
-  },
-
-  /**
-   * 获取伴侣关系设置
-   * @returns 伴侣关系设置
-   */
-  getCoupleSettings: async (): Promise<CoupleSettings> => {
-    return apiClient.get<CoupleSettings>("/couples/settings");
-  },
-
-  /**
-   * 更新伴侣关系设置
-   * @param settings 伴侣关系设置
-   * @returns 更新后的伴侣关系设置
-   */
-  updateCoupleSettings: async (settings: Partial<CoupleSettings>): Promise<CoupleSettings> => {
-    return apiClient.put<CoupleSettings>("/couples/settings", settings);
-  },
+  getCoupleInfo: async (): Promise<CoupleInfoDTO> => {
+    return apiClient.get<CoupleInfoDTO>("/couple/info")
+  }
 }; 

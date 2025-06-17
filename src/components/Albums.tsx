@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import CreateAlbumModal from './CreateAlbumModal';
 import UploadPhotosModal from './UploadPhotosModal';
-import { albumService, Album } from '@/services/album-service';
+import { albumService, Album, DeleteCoupleAlbumPhotosRequest } from '@/services/album-service';
 import { getCoupleSignedUrl } from '@/lib/services/coupleOssService';
 import '@/styles/modal.css';
 import '@/styles/albums.css';
@@ -38,6 +38,12 @@ export default function Albums() {
   const [isMediaViewerOpen, setIsMediaViewerOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [albumsLoaded, setAlbumsLoaded] = useState(false);
+  // 批量删除相关状态
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  // 相册删除状态
+  const [isDeletingAlbum, setIsDeletingAlbum] = useState<string | null>(null);
   
   // 默认封面图片集合，当相册没有封面时随机选择一个
   const defaultCovers = [
@@ -194,16 +200,40 @@ export default function Albums() {
   };
   
   // 处理删除相册按钮点击
-  const handleDeleteAlbum = (albumId: string, albumTitle: string, e: React.MouseEvent) => {
+  const handleDeleteAlbum = async (albumId: string, albumTitle: string, e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
-    // TODO: 实现删除相册功能
+    
     if (window.confirm(
       language === 'zh'
         ? `确定要删除相册 "${albumTitle}" 吗？`
         : `Are you sure you want to delete the album "${albumTitle}"?`
     )) {
-      console.log(`删除相册: ${albumTitle} (ID: ${albumId})`);
-      // 这里可以调用删除API
+      try {
+        // 设置正在删除的相册ID
+        setIsDeletingAlbum(albumId);
+        
+        // 调用删除API
+        await albumService.deleteAlbum(albumId);
+        
+        // 从相册列表中移除已删除的相册
+        setAlbums(prevAlbums => prevAlbums.filter(album => album.id !== albumId));
+        
+        // 如果当前打开的是被删除的相册，关闭详情页
+        if (currentAlbum && currentAlbum.id === albumId) {
+          setIsAlbumDetailOpen(false);
+          setCurrentAlbum(null);
+          setAlbumPhotos([]);
+        }
+        
+        // 显示成功消息
+        alert(language === 'zh' ? '相册删除成功' : 'Album deleted successfully');
+      } catch (err) {
+        console.error('Failed to delete album:', err);
+        alert(language === 'zh' ? '删除相册失败' : 'Failed to delete album');
+      } finally {
+        // 清除正在删除状态
+        setIsDeletingAlbum(null);
+      }
     }
   };
   
@@ -243,6 +273,85 @@ export default function Albums() {
     }
     setIsMediaViewerOpen(false);
     setCurrentMedia(null);
+  };
+  
+  // 批量删除相关函数
+  // 切换选择模式
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    // 退出选择模式时清空选中的照片
+    if (isSelectionMode) {
+      setSelectedPhotos([]);
+    }
+  };
+  
+  // 处理照片选择/取消选择
+  const handleSelectPhoto = (e: React.MouseEvent | null, photoId: string) => {
+    if (e) {
+      e.stopPropagation(); // 阻止事件冒泡，避免触发照片点击事件
+    }
+    
+    setSelectedPhotos(prev => {
+      // 如果已经选中，则取消选择
+      if (prev.includes(photoId)) {
+        return prev.filter(id => id !== photoId);
+      } 
+      // 否则添加到选中列表
+      return [...prev, photoId];
+    });
+  };
+  
+  // 全选照片
+  const selectAll = () => {
+    const allPhotoIds = albumPhotos.map(photo => photo.id);
+    setSelectedPhotos(allPhotoIds);
+  };
+  
+  // 取消全选
+  const deselectAll = () => {
+    setSelectedPhotos([]);
+  };
+  
+  // 处理批量删除
+  const handleBulkDelete = async () => {
+    if (selectedPhotos.length === 0 || !currentAlbum) return;
+    
+    // 确认是否删除
+    const confirmMessage = language === 'zh' 
+      ? `确定要删除选中的 ${selectedPhotos.length} 张照片吗？` 
+      : `Are you sure you want to delete ${selectedPhotos.length} selected photos?`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        setIsDeleting(true);
+        
+        // 调用删除API
+        const deleteParams: DeleteCoupleAlbumPhotosRequest = {
+          album_id: currentAlbum.id,
+          photo_video_ids: selectedPhotos
+        };
+        
+        await albumService.deleteCoupleAlbumPhotos(deleteParams);
+        
+        // 更新UI状态
+        // 从相册照片列表中移除已删除的照片
+        setAlbumPhotos(prev => prev.filter(photo => !selectedPhotos.includes(photo.id)));
+        
+        // 清空选中的照片
+        setSelectedPhotos([]);
+        
+        // 可选：退出选择模式
+        setIsSelectionMode(false);
+        
+        // 提示删除成功
+        alert(language === 'zh' ? '删除成功' : 'Deleted successfully');
+      } catch (err) {
+        console.error('Failed to delete photos:', err);
+        alert(language === 'zh' ? '删除照片失败' : 'Failed to delete photos');
+      } finally {
+        setIsDeleting(false);
+      }
+    }
   };
   
   // 筛选相册
@@ -346,8 +455,17 @@ export default function Albums() {
                   <button title={language === 'zh' ? '编辑相册' : 'Edit Album'} onClick={(e) => handleEditAlbum(album, e)}>
                     <i className="fas fa-edit"></i>
                   </button>
-                  <button title={language === 'zh' ? '删除相册' : 'Delete Album'} onClick={(e) => handleDeleteAlbum(album.id, album.title, e)}>
-                    <i className="fas fa-trash"></i>
+                  <button 
+                    className="delete-btn" 
+                    title={language === 'zh' ? '删除相册' : 'Delete Album'} 
+                    onClick={(e) => handleDeleteAlbum(album.id, album.title, e)}
+                    disabled={isDeletingAlbum === album.id}
+                  >
+                    {isDeletingAlbum === album.id ? (
+                      <i className="fas fa-spinner fa-spin"></i>
+                    ) : (
+                      <i className="fas fa-trash"></i>
+                    )}
                   </button>
                 </div>
               </div>
@@ -380,9 +498,30 @@ export default function Albums() {
           <div className="album-detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{currentAlbum.title}</h2>
-              <button className="close-btn" onClick={handleCloseAlbumDetail}>
-                <i className="fas fa-times"></i>
-              </button>
+              <div className="modal-actions">
+                {!isSelectionMode ? (
+                  <button 
+                    className="action-btn select-btn" 
+                    onClick={toggleSelectionMode}
+                    title={language === 'zh' ? '选择照片' : 'Select Photos'}
+                  >
+                    <i className="fas fa-check-square"></i>
+                    <span><T zh="选择" en="Select" /></span>
+                  </button>
+                ) : (
+                  <button 
+                    className="action-btn cancel-btn" 
+                    onClick={toggleSelectionMode}
+                    title={language === 'zh' ? '取消选择' : 'Cancel Selection'}
+                  >
+                    <i className="fas fa-times"></i>
+                    <span><T zh="取消" en="Cancel" /></span>
+                  </button>
+                )}
+                <button className="close-btn" onClick={handleCloseAlbumDetail}>
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
             </div>
             
             <div className="album-description">
@@ -396,6 +535,54 @@ export default function Albums() {
                 </span>
               </div>
             </div>
+            
+            {/* 选择模式下的操作条 */}
+            {isSelectionMode && (
+              <div className="selection-actions-bar">
+                <div className="selection-status">
+                  <T 
+                    zh={`已选择 ${selectedPhotos.length} 张照片`} 
+                    en={`${selectedPhotos.length} photos selected`} 
+                  />
+                </div>
+                <div className="selection-actions">
+                  <button 
+                    className="action-btn select-all-btn" 
+                    onClick={selectAll}
+                    title={language === 'zh' ? '全选' : 'Select All'}
+                  >
+                    <i className="fas fa-check-double"></i>
+                    <span><T zh="全选" en="Select All" /></span>
+                  </button>
+                  <button 
+                    className="action-btn deselect-all-btn" 
+                    onClick={deselectAll}
+                    title={language === 'zh' ? '取消全选' : 'Deselect All'}
+                  >
+                    <i className="fas fa-square"></i>
+                    <span><T zh="取消全选" en="Deselect All" /></span>
+                  </button>
+                  <button 
+                    className="action-btn delete-btn" 
+                    onClick={handleBulkDelete}
+                    disabled={selectedPhotos.length === 0 || isDeleting}
+                    title={language === 'zh' ? '删除所选' : 'Delete Selected'}
+                  >
+                    {isDeleting ? (
+                      <i className="fas fa-spinner fa-spin"></i>
+                    ) : (
+                      <i className="fas fa-trash"></i>
+                    )}
+                    <span>
+                      <T 
+                        zh={isDeleting ? "删除中..." : "删除所选"} 
+                        en={isDeleting ? "Deleting..." : "Delete Selected"} 
+                      />
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
             
             {loadingPhotos ? (
               <div className="loading-container">
@@ -421,10 +608,22 @@ export default function Albums() {
               <div className="album-photos-grid">
                 {albumPhotos.map((photo, index) => (
                   <div 
-                    className="photo-item" 
+                    className={`photo-item ${isSelectionMode ? 'selection-mode' : ''} ${selectedPhotos.includes(photo.id) ? 'selected' : ''}`}
                     key={photo.id || index}
-                    onClick={() => handleMediaClick(photo)}
+                    onClick={() => isSelectionMode ? handleSelectPhoto(null, photo.id) : handleMediaClick(photo)}
                   >
+                    {isSelectionMode && (
+                      <div 
+                        className="selection-checkbox"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPhoto(e, photo.id);
+                        }}
+                      >
+                        <i className={`fas ${selectedPhotos.includes(photo.id) ? 'fa-check-square' : 'fa-square'}`}></i>
+                      </div>
+                    )}
+                    
                     {photo.media_type === 'photo' ? (
                       <img 
                         src={photo.thumbnail_url || photo.url} 
@@ -515,6 +714,77 @@ export default function Albums() {
           color: #333;
         }
         
+        .modal-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .action-btn {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 5px 10px;
+          border-radius: 4px;
+          border: none;
+          cursor: pointer;
+          font-size: 14px;
+          background: #f0f0f0;
+          color: #333;
+          transition: background 0.2s;
+        }
+        
+        .action-btn:hover {
+          background: #e0e0e0;
+        }
+        
+        .action-btn i {
+          font-size: 14px;
+        }
+        
+        .select-btn {
+          background: #e8f4fd;
+          color: #0078d4;
+        }
+        
+        .select-btn:hover {
+          background: #d0e8fa;
+        }
+        
+        .delete-btn {
+          background: #fde8e8;
+          color: #d40000;
+        }
+        
+        .delete-btn:hover:not(:disabled) {
+          background: #fad0d0;
+        }
+        
+        .delete-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .selection-actions-bar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 16px;
+          margin: 16px 0;
+          background: #f8f8f8;
+          border-radius: 8px;
+        }
+        
+        .selection-status {
+          font-weight: 500;
+          color: #333;
+        }
+        
+        .selection-actions {
+          display: flex;
+          gap: 8px;
+        }
+        
         .close-btn {
           background: none;
           border: none;
@@ -569,10 +839,38 @@ export default function Albums() {
           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
           cursor: pointer;
           transition: transform 0.2s ease;
+          position: relative;
         }
         
         .photo-item:hover {
           transform: scale(1.02);
+        }
+        
+        .photo-item.selection-mode:hover {
+          transform: none;
+        }
+        
+        .photo-item.selection-mode.selected {
+          box-shadow: 0 0 0 3px #0078d4;
+        }
+        
+        .selection-checkbox {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 24px;
+          height: 24px;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2;
+        }
+        
+        .selection-checkbox i {
+          color: #0078d4;
+          font-size: 18px;
         }
         
         .photo-item img {

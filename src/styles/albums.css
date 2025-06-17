@@ -98,6 +98,21 @@
   background-color: white;
 }
 
+/* 删除按钮特殊样式 */
+.album-actions .delete-btn {
+  background-color: rgba(255, 220, 220, 0.8);
+  color: #e53935;
+}
+
+.album-actions .delete-btn:hover {
+  background-color: rgba(255, 200, 200, 0.9);
+}
+
+.album-actions .delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* 加载、错误和空状态 */
 .loading-container,
 .error-container,
@@ -156,6 +171,16 @@
   
   .album-actions button:hover {
     background-color: rgba(70, 70, 70, 0.9);
+  }
+  
+  /* 深色模式删除按钮 */
+  .album-actions .delete-btn {
+    background-color: rgba(80, 30, 30, 0.8);
+    color: #ff6b6b;
+  }
+  
+  .album-actions .delete-btn:hover {
+    background-color: rgba(100, 30, 30, 0.9);
   }
   
   .loading-container,

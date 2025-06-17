@@ -17,6 +17,11 @@ export default function Personal() {
   const [currentVideo, setCurrentVideo] = useState<FileListItem | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  // 删除相关状态
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [mediaToDelete, setMediaToDelete] = useState<FileListItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  
   // 加载文件列表
   const loadMediaFiles = async () => {
     try {
@@ -59,6 +64,7 @@ export default function Personal() {
             }
             
             return {
+              id: media.id, // 添加媒体ID，用于删除操作
               name: media.title || fileName,
               url: signedUrl, // 使用带授权的URL
               lastModified: media.updated_at || media.created_at,
@@ -75,6 +81,7 @@ export default function Personal() {
         
         // 如果处理失败，返回一个默认对象
         return {
+          id: media.id, // 添加媒体ID，即使处理失败也保留ID
           name: media.title || '未知文件',
           url: '', // 空URL
           lastModified: media.updated_at || media.created_at,
@@ -141,6 +148,38 @@ export default function Personal() {
       )
     : mediaFiles;
   
+  // 处理删除按钮点击
+  const handleDeleteClick = (e: React.MouseEvent, file: FileListItem) => {
+    e.stopPropagation(); // 阻止事件冒泡，防止触发其他点击事件
+    setMediaToDelete(file);
+    setConfirmDelete(true);
+  };
+
+  // 确认删除媒体
+  const confirmDeleteMedia = async () => {
+    if (!mediaToDelete || !mediaToDelete.id) return;
+    
+    setDeleteLoading(true);
+    try {
+      await mediaService.deleteMedia(mediaToDelete.id);
+      // 删除成功，刷新媒体列表
+      loadMediaFiles();
+    } catch (err) {
+      console.error('删除媒体失败:', err);
+      setError(err instanceof Error ? err.message : '删除媒体失败');
+    } finally {
+      setDeleteLoading(false);
+      setConfirmDelete(false);
+      setMediaToDelete(null);
+    }
+  };
+
+  // 取消删除
+  const cancelDelete = () => {
+    setConfirmDelete(false);
+    setMediaToDelete(null);
+  };
+  
   return (
     <>
       <div className="timeline-header">
@@ -192,6 +231,43 @@ export default function Personal() {
                 <i className="fas fa-times"></i>
               </button>
               <h3 className="text-white text-lg font-medium mt-4">{currentVideo.name}</h3>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除确认对话框 */}
+      {confirmDelete && mediaToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4 relative shadow-xl transform transition-all">
+            <h3 className="text-lg font-medium mb-4">
+              <T zh={`确认删除 "${mediaToDelete.name}"?`} en={`Delete "${mediaToDelete.name}"?`} />
+            </h3>
+            <p className="text-gray-500 mb-4">
+              <T 
+                zh="此操作无法撤销，媒体文件将被永久删除。" 
+                en="This action cannot be undone. The media will be permanently deleted." 
+              />
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button 
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition"
+                onClick={cancelDelete}
+                disabled={deleteLoading}
+              >
+                <T zh="取消" en="Cancel" />
+              </button>
+              <button 
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center justify-center min-w-[80px]"
+                onClick={confirmDeleteMedia}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? (
+                  <i className="fas fa-spinner fa-spin"></i>
+                ) : (
+                  <T zh="删除" en="Delete" />
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -256,8 +332,12 @@ export default function Personal() {
                 <div className="image-container">
                   <img src={file.thumbnail_url || file.url} alt={file.name} className="media-image" />
                   <div className="media-actions">
-                    <button className="media-action-btn"><i className="fas fa-edit"></i></button>
-                    <button className="media-action-btn"><i className="fas fa-trash"></i></button>
+                    <button 
+                      className="media-action-btn"
+                      onClick={(e) => handleDeleteClick(e, file)}
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -277,16 +357,7 @@ export default function Personal() {
                       className="media-action-btn" 
                       onClick={(e) => {
                         e.stopPropagation();
-                        // 编辑功能
-                      }}
-                    >
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button 
-                      className="media-action-btn" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 删除功能
+                        handleDeleteClick(e, file);
                       }}
                     >
                       <i className="fas fa-trash"></i>
@@ -294,7 +365,6 @@ export default function Personal() {
                   </div>
                 </div>
               )}
-              <div className="media-title">{file.name}</div>
             </div>
           ))}
         </div>
@@ -362,7 +432,7 @@ export default function Personal() {
           top: 8px;
           right: 8px;
           display: flex;
-          gap: 4px;
+          justify-content: center;
           opacity: 0;
           transition: opacity 0.3s ease;
         }
@@ -373,8 +443,8 @@ export default function Personal() {
         }
 
         .media-action-btn {
-          width: 30px;
-          height: 30px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           background: rgba(255,255,255,0.8);
           border: none;
@@ -384,20 +454,13 @@ export default function Personal() {
           cursor: pointer;
           color: #333;
           transition: all 0.2s ease;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .media-action-btn:hover {
           background: white;
-          color: #6c5ce7;
-        }
-
-        .media-title {
-          padding: 10px;
-          font-size: 14px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          text-align: center;
+          color: #e53e3e;
+          transform: scale(1.1);
         }
 
         .video-player-container {

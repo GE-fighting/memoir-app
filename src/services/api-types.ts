@@ -19,28 +19,8 @@ export interface UserPreferences {
   notifications_enabled: boolean;
 }
 
-// 伴侣相关类型
-export interface Couple {
-  id: string;
-  name: string;
-  anniversary: string;
-  user_ids: string[];
-  created_at: string;
-  updated_at: string;
-}
 
-export interface CoupleSettings {
-  theme: string;
-  notification_preferences: {
-    events: boolean;
-    memories: boolean;
-    wishlist: boolean;
-  };
-  privacy_settings: {
-    share_timeline: boolean;
-    share_photos: boolean;
-  };
-}
+
 
 // 时间轴事件相关类型
 export interface TimelineEvent {

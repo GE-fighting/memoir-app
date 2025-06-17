@@ -112,8 +112,8 @@ export const mediaService = {
    * @param id 媒体ID
    * @returns 操作结果
    */
-  deleteMedia: async (id: number): Promise<void> => {
-    return apiClient.delete<void>(`/media/${id}`);
+  deleteMedia: async (id: string): Promise<void> => {
+    return apiClient.delete<void>(`/personal-media/${id}`);
   },
 
   /**
