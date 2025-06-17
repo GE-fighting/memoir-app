@@ -6,7 +6,7 @@ import { userService } from '../services/user-service';
 import { coupleService, CoupleInfoDTO } from '@/services/couple-service';
 
 export default function Account() {
-  const { language } = useLanguage();
+  useLanguage();
   const [hasCouple, setHasCouple] = useState<boolean>(false);
   const [anniversaryDate, setAnniversaryDate] = useState<string>("2021-08-18");
   const [destinKey, setDestinKey] = useState<string>("");

@@ -294,7 +294,7 @@ export const listFiles = async (): Promise<FileListItem[]> => {
     const fullPrefix = `${userId}/`;
     
     // 调用OSS客户端的list方法，递归获取所有子目录下的文件
-    // @ts-ignore - ali-oss类型定义可能不准确
+    // @ts-expect-error - ali-oss类型定义可能不准确
     const result = await client.list({
       prefix: fullPrefix,
       'max-keys': 1000, // 增加返回数量以获取更多文件
@@ -307,7 +307,7 @@ export const listFiles = async (): Promise<FileListItem[]> => {
     
     // 获取所有分页结果
     while (nextMarker) {
-      // @ts-ignore - ali-oss类型定义可能不准确
+      // @ts-expect-error - ali-oss类型定义可能不准确
       const nextResult = await client.list({
         prefix: fullPrefix,
         'max-keys': 1000,

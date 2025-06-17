@@ -73,7 +73,7 @@ export default function Albums() {
       console.log('Albums data from API:', data); // 添加调试日志
       setAlbums(data);
       setAlbumsLoaded(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load albums:', err);
       setError(
         language === 'zh' 

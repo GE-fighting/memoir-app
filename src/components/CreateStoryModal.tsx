@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import { eventService } from '../services/event-service';
 import { locationService } from '../services/location-service';

@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pm2:dev": "pm2 start ecosystem.config.js --env development",
+    "pm2:prod": "pm2 start ecosystem.config.js --env production",
+    "pm2:reload": "pm2 reload memoir-app",
+    "pm2:stop": "pm2 stop memoir-app",
+    "pm2:delete": "pm2 delete memoir-app",
+    "pm2:logs": "pm2 logs memoir-app",
+    "pm2:monit": "pm2 monit",
+    "pm2:startup": "pm2 startup",
+    "pm2:save": "pm2 save"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -16,6 +25,7 @@
     "ali-oss": "^6.23.0",
     "axios": "^1.9.0",
     "framer-motion": "^12.12.1",
+    "graceful-fs": "^4.2.11",
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

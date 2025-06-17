@@ -16,7 +16,7 @@ export default function AlbumsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasCoupleRelationship, setHasCoupleRelationship] = useState(false);
   const [hasCheckedRelationship, setHasCheckedRelationship] = useState(false);
-  const [modalClosed, setModalClosed] = useState(false);
+  const [modalClosed] = useState(false);
   const { showNotification, NotificationComponent } = useNotification();
   
   // 处理返回首页的行为
