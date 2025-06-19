@@ -190,6 +190,18 @@ export default function Albums() {
     if (currentAlbum && selectedAlbum && currentAlbum.id === selectedAlbum.id) {
       loadAlbumPhotos(currentAlbum.id);
     }
+    
+    // 重新加载所有相册列表，以更新照片数量
+    const refreshAlbums = async () => {
+      try {
+        const updatedAlbums = await albumService.getAlbums();
+        setAlbums(updatedAlbums);
+      } catch (err) {
+        console.error('刷新相册列表失败:', err);
+      }
+    };
+    
+    refreshAlbums();
   }, [currentAlbum, selectedAlbum, loadAlbumPhotos]);
   
   // 处理编辑相册按钮点击
@@ -433,16 +445,16 @@ export default function Albums() {
                     <div>
                       {album.count !== undefined ? (
                         <T 
-                          zh={`${album.count}张照片`} 
-                          en={`${album.count} Photos`} 
+                          zh={`${album.count}个媒体文件`} 
+                          en={`${album.count} Media Files`} 
                         />
                       ) : album.photos_videos ? (
                         <T 
-                          zh={`${album.photos_videos.length}张照片`} 
-                          en={`${album.photos_videos.length} Photos`} 
+                          zh={`${album.photos_videos.length}个媒体文件`} 
+                          en={`${album.photos_videos.length} Media Files`} 
                         />
                       ) : (
-                        <T zh="0张照片" en="0 Photos" />
+                        <T zh="0个媒体文件" en="0 Media Files" />
                       )}
                     </div>
                     <div>{formatDate(album.created_at)}</div>
@@ -531,7 +543,7 @@ export default function Albums() {
                   <i className="fas fa-calendar"></i> {formatDate(currentAlbum.created_at)}
                 </span>
                 <span>
-                  <i className="fas fa-image"></i> {currentAlbum.count !== undefined ? currentAlbum.count : albumPhotos.length} <T zh="张照片" en="Photos" />
+                  <i className="fas fa-image"></i> {currentAlbum.count !== undefined ? currentAlbum.count : albumPhotos.length} <T zh="个媒体文件" en="Media Files" />
                 </span>
               </div>
             </div>
