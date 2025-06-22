@@ -413,7 +413,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
             left: 18,
             background: 'none',
             border: 'none',
-            color: '#666',
+            color: 'var(--text-secondary, #666)',
             cursor: 'pointer',
             fontSize: 20,
             opacity: 0.85,
@@ -429,19 +429,20 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
         
         {/* 下拉菜单 */}
         {showMenu && (
-          <div 
+          <div
             ref={menuRef}
             className="story-menu-dropdown"
             style={{
               position: 'absolute',
               top: '48px',
               left: '18px',
-              background: 'white',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              background: 'var(--bg-card, white)',
+              boxShadow: 'var(--shadow-md, 0 2px 10px rgba(0,0,0,0.1))',
               borderRadius: '8px',
               padding: '4px 0',
               zIndex: 20,
               minWidth: '120px',
+              border: '1px solid var(--border-primary, rgba(0,0,0,0.1))',
             }}
           >
             <button
@@ -456,10 +457,10 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
                 textAlign: 'left',
                 cursor: 'pointer',
                 fontSize: '14px',
-                color: '#666',
+                color: 'var(--text-secondary, #666)',
                 transition: 'background-color 0.2s',
               }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary, #f5f5f5)'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
               <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
@@ -478,11 +479,11 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
                 textAlign: 'left',
                 cursor: isDeleting ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
-                color: '#e53e3e',
+                color: 'var(--accent-danger, #e53e3e)',
                 transition: 'background-color 0.2s',
                 opacity: isDeleting ? 0.6 : 1,
               }}
-              onMouseOver={(e) => !isDeleting && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+              onMouseOver={(e) => !isDeleting && (e.currentTarget.style.backgroundColor = 'var(--bg-tertiary, #f5f5f5)')}
               onMouseOut={(e) => !isDeleting && (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               <i className="fas fa-trash-alt" style={{ marginRight: '8px' }}></i>
@@ -519,9 +520,6 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
                 {currentEvent.locations.map(location => (
                   <div className="location-item" key={location.id}>
                     <span className="location-name">{location.name}</span>
-                    {location.description && (
-                      <span className="location-description">{location.description}</span>
-                    )}
                   </div>
                 ))}
               </div>
@@ -543,7 +541,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
           </div>
           
           {deleteError && (
-            <div className="delete-error-message" style={{ color: '#e53e3e', marginBottom: 8, fontSize: 14 }}>
+            <div className="delete-error-message" style={{ color: 'var(--accent-danger, #e53e3e)', marginBottom: 8, fontSize: 14 }}>
               <i className="fas fa-exclamation-circle"></i> {deleteError}
             </div>
           )}

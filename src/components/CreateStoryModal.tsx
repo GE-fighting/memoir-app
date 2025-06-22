@@ -8,6 +8,7 @@ import { albumService, Album } from '../services/album-service';
 import { CreateTimelineEventRequest, Location } from '../services/api-types';
 import { useAuth } from '../contexts/auth-context';
 import { getCoupleSignedUrl } from '../lib/services/coupleOssService';
+import { useTheme } from '../contexts/theme-context';
 
 interface CreateStoryModalProps {
   isOpen: boolean;
@@ -24,14 +25,67 @@ const StepIndicator = ({ currentStep }: { currentStep: number }) => {
   ];
 
   return (
-    <div className="step-indicator">
+    <div className="step-indicator" style={{
+      position: 'relative',
+      display: 'flex',
+      justifyContent: 'space-between',
+      margin: '0 20px',
+      padding: '20px 0'
+    }}>
+      {/* 连接线 */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: 0,
+        right: 0,
+        height: '2px',
+        backgroundColor: 'var(--border-primary)',
+        zIndex: 1
+      }}></div>
+
       {steps.map((step) => (
-        <div 
-          key={step.key} 
-          className={`step ${currentStep === step.key ? 'active' : ''} ${currentStep > step.key ? 'completed' : ''}`}
+        <div
+          key={step.key}
+          className="step"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            position: 'relative',
+            zIndex: 2
+          }}
         >
-          <div className="step-number">{step.key}</div>
-          <div className="step-label"><T zh={step.label.zh} en={step.label.en} /></div>
+          <div
+            className="step-number"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: '600',
+              marginBottom: '8px',
+              backgroundColor: currentStep >= step.key ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+              color: currentStep >= step.key ? 'var(--text-inverse)' : 'var(--text-tertiary)',
+              border: `2px solid ${currentStep >= step.key ? 'var(--accent-primary)' : 'var(--border-primary)'}`,
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {currentStep > step.key ? <i className="fas fa-check"></i> : step.key}
+          </div>
+          <div
+            className="step-label"
+            style={{
+              fontSize: '12px',
+              fontWeight: '500',
+              color: currentStep >= step.key ? 'var(--text-primary)' : 'var(--text-tertiary)',
+              textAlign: 'center'
+            }}
+          >
+            <T zh={step.label.zh} en={step.label.en} />
+          </div>
         </div>
       ))}
     </div>
@@ -41,6 +95,7 @@ const StepIndicator = ({ currentStep }: { currentStep: number }) => {
 export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateStoryModalProps) {
   const { language } = useLanguage();
   const { user } = useAuth(); // 使用 useAuth 钩子获取当前用户信息
+  const { theme } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -361,11 +416,39 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
 
   // 第一步：故事详情
   const renderStoryDetailsStep = () => {
+    const formGroupStyle = {
+      marginBottom: '20px'
+    };
+
+    const labelStyle = {
+      display: 'block',
+      marginBottom: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: 'var(--text-secondary)'
+    };
+
+    const inputStyle = {
+      width: '100%',
+      padding: '10px 12px',
+      border: '1px solid var(--border-primary)',
+      borderRadius: '6px',
+      fontSize: '14px',
+      backgroundColor: 'var(--bg-secondary)',
+      color: 'var(--text-primary)',
+      transition: 'all 0.2s ease'
+    };
+
+    const requiredStyle = {
+      color: 'var(--accent-danger)',
+      marginLeft: '2px'
+    };
+
     return (
       <div className="step-content">
-        <div className="form-group">
-          <label htmlFor="story-title">
-            <T zh="故事标题" en="Story Title" /> <span className="required">*</span>
+        <div className="form-group" style={formGroupStyle}>
+          <label htmlFor="story-title" style={labelStyle}>
+            <T zh="故事标题" en="Story Title" /> <span style={requiredStyle}>*</span>
           </label>
           <input
             id="story-title"
@@ -374,13 +457,22 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
             onChange={(e) => setTitle(e.target.value)}
             placeholder={language === 'zh' ? '输入故事标题' : 'Enter story title'}
             required
+            style={inputStyle}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'var(--border-focus)';
+              e.target.style.backgroundColor = 'var(--bg-primary)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'var(--border-primary)';
+              e.target.style.backgroundColor = 'var(--bg-secondary)';
+            }}
           />
         </div>
-        
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="start-date">
-              <T zh="开始日期" en="Start Date" /> <span className="required">*</span>
+
+        <div className="form-row" style={{ display: 'flex', gap: '16px' }}>
+          <div className="form-group" style={{ ...formGroupStyle, flex: 1 }}>
+            <label htmlFor="start-date" style={labelStyle}>
+              <T zh="开始日期" en="Start Date" /> <span style={requiredStyle}>*</span>
             </label>
             <input
               id="start-date"
@@ -388,12 +480,21 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               required
+              style={inputStyle}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--border-focus)';
+                e.target.style.backgroundColor = 'var(--bg-primary)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'var(--border-primary)';
+                e.target.style.backgroundColor = 'var(--bg-secondary)';
+              }}
             />
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="end-date">
-              <T zh="结束日期" en="End Date" /> <span className="required">*</span>
+
+          <div className="form-group" style={{ ...formGroupStyle, flex: 1 }}>
+            <label htmlFor="end-date" style={labelStyle}>
+              <T zh="结束日期" en="End Date" /> <span style={requiredStyle}>*</span>
             </label>
             <input
               id="end-date"
@@ -401,13 +502,22 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               required
+              style={inputStyle}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--border-focus)';
+                e.target.style.backgroundColor = 'var(--bg-primary)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'var(--border-primary)';
+                e.target.style.backgroundColor = 'var(--bg-secondary)';
+              }}
             />
           </div>
         </div>
-        
-        <div className="form-group">
-          <label htmlFor="story-content">
-            <T zh="故事内容" en="Story Content" /> <span className="required">*</span>
+
+        <div className="form-group" style={formGroupStyle}>
+          <label htmlFor="story-content" style={labelStyle}>
+            <T zh="故事内容" en="Story Content" /> <span style={requiredStyle}>*</span>
           </label>
           <textarea
             id="story-content"
@@ -416,6 +526,19 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
             placeholder={language === 'zh' ? '输入故事内容...' : 'Enter story content...'}
             rows={6}
             required
+            style={{
+              ...inputStyle,
+              resize: 'vertical',
+              minHeight: '120px'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'var(--border-focus)';
+              e.target.style.backgroundColor = 'var(--bg-primary)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'var(--border-primary)';
+              e.target.style.backgroundColor = 'var(--bg-secondary)';
+            }}
           />
         </div>
       </div>
@@ -424,40 +547,132 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
 
   // 第二步：地点选择
   const renderLocationSelectionStep = () => {
+    const subtitleStyle = {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: 'var(--text-primary)',
+      marginBottom: '20px',
+      textAlign: 'center' as const
+    };
+
+    const loadingStyle = {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 20px',
+      color: 'var(--text-secondary)'
+    };
+
+    const emptyStateStyle = {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 20px',
+      color: 'var(--text-tertiary)'
+    };
+
     return (
       <div className="step-content">
-        <h3 className="step-subtitle"><T zh="选择故事发生的地点" en="Select Locations Where Your Story Happened" /></h3>
-        
+        <h3 style={subtitleStyle}>
+          <T zh="选择故事发生的地点" en="Select Locations Where Your Story Happened" />
+        </h3>
+
         {locationsLoading ? (
-          <div className="loading-container">
-            <i className="fas fa-spinner fa-spin"></i>
+          <div style={loadingStyle}>
+            <i className="fas fa-spinner fa-spin" style={{ fontSize: '24px', marginBottom: '12px' }}></i>
             <p><T zh="加载地点列表中..." en="Loading locations..." /></p>
           </div>
         ) : !locations || locations.length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-map-marker-alt"></i>
+          <div style={emptyStateStyle}>
+            <i className="fas fa-map-marker-alt" style={{ fontSize: '48px', marginBottom: '16px' }}></i>
             <p><T zh="暂无保存的地点" en="No saved locations yet" /></p>
           </div>
         ) : (
-          <div className="locations-grid">
-            {locations.map(location => (
-              <div 
-                key={location.id}
-                className={`location-card ${selectedLocationIds.includes(location.id) ? 'selected' : ''}`}
-                onClick={() => toggleLocationSelection(location.id)}
-              >
-                <div className="location-icon">
-                  <i className="fas fa-map-marker-alt"></i>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '16px',
+            marginTop: '20px'
+          }}>
+            {locations.map(location => {
+              const isSelected = selectedLocationIds.includes(location.id);
+              return (
+                <div
+                  key={location.id}
+                  onClick={() => toggleLocationSelection(location.id)}
+                  style={{
+                    border: `1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-primary)'}`,
+                    borderRadius: '8px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    backgroundColor: isSelected ? 'var(--bg-tertiary)' : 'var(--bg-secondary)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                      e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = 'var(--border-primary)';
+                      e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                    }
+                  }}
+                >
+                  <div style={{
+                    fontSize: '24px',
+                    color: 'var(--accent-primary)',
+                    marginBottom: '12px'
+                  }}>
+                    <i className="fas fa-map-marker-alt"></i>
+                  </div>
+                  <div>
+                    <h4 style={{
+                      margin: '0 0 8px',
+                      fontSize: '16px',
+                      color: 'var(--text-primary)'
+                    }}>
+                      {location.name}
+                    </h4>
+                    {location.description && (
+                      <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        color: 'var(--text-secondary)',
+                        lineHeight: '1.4'
+                      }}>
+                        {location.description}
+                      </p>
+                    )}
+                  </div>
+                  {isSelected && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-primary)',
+                      color: 'var(--text-inverse)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px'
+                    }}>
+                      <i className="fas fa-check"></i>
+                    </div>
+                  )}
                 </div>
-                <div className="location-details">
-                  <h4>{location.name}</h4>
-                  {location.description && <p>{location.description}</p>}
-                </div>
-                <div className="location-select-indicator">
-                  {selectedLocationIds.includes(location.id) && <i className="fas fa-check"></i>}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -466,31 +681,90 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
 
   // 第三步：照片选择
   const renderPhotoSelectionStep = () => {
+    const subtitleStyle = {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: 'var(--text-primary)',
+      marginBottom: '20px',
+      textAlign: 'center' as const
+    };
+
+    const loadingStyle = {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 20px',
+      color: 'var(--text-secondary)'
+    };
+
+    const emptyStateStyle = {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 20px',
+      color: 'var(--text-tertiary)'
+    };
+
+    const formGroupStyle = {
+      marginBottom: '20px'
+    };
+
+    const labelStyle = {
+      display: 'block',
+      marginBottom: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: 'var(--text-secondary)'
+    };
+
+    const selectStyle = {
+      width: '100%',
+      padding: '10px 12px',
+      border: '1px solid var(--border-primary)',
+      borderRadius: '6px',
+      fontSize: '14px',
+      backgroundColor: 'var(--bg-secondary)',
+      color: 'var(--text-primary)',
+      transition: 'all 0.2s ease'
+    };
+
     return (
       <div className="step-content">
-        <h3 className="step-subtitle"><T zh="选择故事相关的照片" en="Select Photos Related to Your Story" /></h3>
-        
+        <h3 style={subtitleStyle}>
+          <T zh="选择故事相关的照片" en="Select Photos Related to Your Story" />
+        </h3>
+
         {albumsLoading ? (
-          <div className="loading-container">
-            <i className="fas fa-spinner fa-spin"></i>
+          <div style={loadingStyle}>
+            <i className="fas fa-spinner fa-spin" style={{ fontSize: '24px', marginBottom: '12px' }}></i>
             <p><T zh="加载相册列表中..." en="Loading albums..." /></p>
           </div>
         ) : albums.length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-images"></i>
+          <div style={emptyStateStyle}>
+            <i className="fas fa-images" style={{ fontSize: '48px', marginBottom: '16px' }}></i>
             <p><T zh="暂无相册" en="No albums yet" /></p>
           </div>
         ) : (
           <>
-            <div className="form-group">
-              <label htmlFor="album-select">
+            <div style={formGroupStyle}>
+              <label htmlFor="album-select" style={labelStyle}>
                 <T zh="选择相册" en="Select Album" />
               </label>
               <select
                 id="album-select"
                 value={selectedAlbumId}
                 onChange={(e) => setSelectedAlbumId(e.target.value)}
-                className="album-select"
+                style={selectStyle}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--border-focus)';
+                  e.target.style.backgroundColor = 'var(--bg-primary)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-primary)';
+                  e.target.style.backgroundColor = 'var(--bg-secondary)';
+                }}
               >
                 <option value="">
                   {language === 'zh' ? '-- 请选择相册 --' : '-- Select an album --'}
@@ -505,60 +779,154 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
             
             {selectedAlbumId && (
               albumPhotosLoading ? (
-                <div className="loading-container">
-                  <i className="fas fa-spinner fa-spin"></i>
+                <div style={loadingStyle}>
+                  <i className="fas fa-spinner fa-spin" style={{ fontSize: '24px', marginBottom: '12px' }}></i>
                   <p><T zh="加载照片中..." en="Loading photos..." /></p>
                 </div>
               ) : albumPhotos.length === 0 ? (
-                <div className="empty-state">
-                  <i className="fas fa-image"></i>
+                <div style={emptyStateStyle}>
+                  <i className="fas fa-image" style={{ fontSize: '48px', marginBottom: '16px' }}></i>
                   <p><T zh="该相册暂无照片" en="No photos in this album" /></p>
                 </div>
               ) : (
                 <>
                   {/* 添加选择封面照片的提示 */}
                   {selectedPhotoIds.length > 0 && (
-                    <div className="cover-photo-tip">
-                      <p>
-                        <i className="fas fa-info-circle"></i>
-                        <T 
-                          zh="请从已选照片中选择一张作为故事封面（点击照片右上角的星标）" 
-                          en="Please select one photo as story cover (click the star icon on the top-right of the photo)" 
+                    <div style={{
+                      backgroundColor: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '6px',
+                      padding: '12px',
+                      marginBottom: '16px'
+                    }}>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        color: 'var(--text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <i className="fas fa-info-circle" style={{ color: 'var(--accent-primary)' }}></i>
+                        <T
+                          zh="请从已选照片中选择一张作为故事封面（点击照片右上角的星标）"
+                          en="Please select one photo as story cover (click the star icon on the top-right of the photo)"
                         />
                       </p>
                     </div>
                   )}
                   
-                  <div className="photos-grid">
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                    gap: '12px',
+                    marginTop: '16px'
+                  }}>
                     {albumPhotos.map(photo => {
                       const isSelected = selectedPhotoIds.includes(photo.id);
                       const isCover = coverPhotoId === photo.id;
-                      
+
                       return (
-                        <div 
+                        <div
                           key={photo.id}
-                          className={`photo-card ${isSelected ? 'selected' : ''} ${isCover ? 'is-cover' : ''}`}
                           onClick={() => togglePhotoSelection(photo.id)}
+                          style={{
+                            position: 'relative',
+                            aspectRatio: '1',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            border: `2px solid ${
+                              isCover ? 'var(--accent-warning)' :
+                              isSelected ? 'var(--accent-primary)' :
+                              'var(--border-primary)'
+                            }`,
+                            transition: 'all 0.2s ease',
+                            backgroundColor: 'var(--bg-secondary)'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) {
+                              e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected && !isCover) {
+                              e.currentTarget.style.borderColor = 'var(--border-primary)';
+                            }
+                          }}
                         >
-                          <div className="photo-preview">
-                            <img 
-                              src={getPhotoUrl(photo)} 
-                              alt={photo.title || 'Photo'} 
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            position: 'relative'
+                          }}>
+                            <img
+                              src={getPhotoUrl(photo)}
+                              alt={photo.title || 'Photo'}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
                             />
                           </div>
-                          <div className="photo-select-indicator">
-                            {isSelected && <i className="fas fa-check"></i>}
-                          </div>
-                          
-                          {/* 添加封面标记按钮 */}
+
+                          {/* 选中指示器 */}
                           {isSelected && (
-                            <div 
-                              className={`cover-indicator ${isCover ? 'active' : ''}`}
+                            <div style={{
+                              position: 'absolute',
+                              top: '4px',
+                              left: '4px',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: 'var(--accent-primary)',
+                              color: 'var(--text-inverse)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px'
+                            }}>
+                              <i className="fas fa-check"></i>
+                            </div>
+                          )}
+
+                          {/* 封面标记按钮 */}
+                          {isSelected && (
+                            <div
                               onClick={(e) => {
                                 e.stopPropagation(); // 阻止事件冒泡
                                 setCoverPhoto(photo.id);
                               }}
                               title={language === 'zh' ? '设为封面' : 'Set as cover'}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                width: '24px',
+                                height: '24px',
+                                borderRadius: '50%',
+                                backgroundColor: isCover ? 'var(--accent-warning)' : 'var(--bg-overlay)',
+                                color: isCover ? 'var(--text-inverse)' : 'var(--text-tertiary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isCover) {
+                                  e.currentTarget.style.backgroundColor = 'var(--accent-warning)';
+                                  e.currentTarget.style.color = 'var(--text-inverse)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isCover) {
+                                  e.currentTarget.style.backgroundColor = 'var(--bg-overlay)';
+                                  e.currentTarget.style.color = 'var(--text-tertiary)';
+                                }
+                              }}
                             >
                               <i className="fas fa-star"></i>
                             </div>
@@ -570,16 +938,42 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
                   
                   {/* 显示已选封面预览 */}
                   {coverPhotoId && (
-                    <div className="selected-cover">
-                      <h4><T zh="已选封面" en="Selected Cover" /></h4>
-                      <div className="cover-preview">
+                    <div style={{
+                      marginTop: '24px',
+                      padding: '16px',
+                      backgroundColor: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '8px'
+                    }}>
+                      <h4 style={{
+                        margin: '0 0 12px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: 'var(--text-primary)'
+                      }}>
+                        <T zh="已选封面" en="Selected Cover" />
+                      </h4>
+                      <div style={{
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        maxHeight: '150px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        backgroundColor: 'var(--bg-primary)'
+                      }}>
                         {albumPhotos.map(photo => {
                           if (photo.id === coverPhotoId) {
                             return (
-                              <img 
+                              <img
                                 key={photo.id}
-                                src={getPhotoUrl(photo, false)} 
-                                alt={photo.title || 'Cover'} 
+                                src={getPhotoUrl(photo, false)}
+                                alt={photo.title || 'Cover'}
+                                style={{
+                                  maxWidth: '100%',
+                                  height: 'auto',
+                                  objectFit: 'cover'
+                                }}
                               />
                             );
                           }
@@ -598,48 +992,126 @@ export default function CreateStoryModal({ isOpen, onClose, onSuccess }: CreateS
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container wide-modal">
-        <div className="modal-header">
-          <h2><T zh="创建新故事" en="Create New Story" /></h2>
-          <button className="close-button" onClick={onClose}>
+    <div className="modal-overlay" style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
+      <div className="modal-container wide-modal" style={{
+        backgroundColor: 'var(--bg-card)',
+        border: '1px solid var(--border-primary)',
+        boxShadow: 'var(--shadow-xl)'
+      }}>
+        <div className="modal-header" style={{ borderBottomColor: 'var(--border-primary)' }}>
+          <h2 style={{ color: 'var(--text-primary)' }}><T zh="创建回忆" en="Create New Story" /></h2>
+          <button className="close-button" onClick={onClose} style={{ color: 'var(--text-tertiary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}>
             <i className="fas fa-times"></i>
           </button>
         </div>
         
         <StepIndicator currentStep={currentStep} />
         
-        <div className="modal-body">
-          {error && <div className="error-message">{error}</div>}
+        <div className="modal-body" style={{ backgroundColor: 'var(--bg-card)' }}>
+          {error && (
+            <div className="error-message" style={{
+              color: 'var(--accent-danger)',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--accent-danger)',
+              borderRadius: '6px',
+              padding: '12px',
+              marginBottom: '16px'
+            }}>
+              {error}
+            </div>
+          )}
           {renderStepContent()}
         </div>
-        
-        <div className="modal-footer">
+
+        <div className="modal-footer" style={{
+          borderTopColor: 'var(--border-primary)',
+          backgroundColor: 'var(--bg-card)'
+        }}>
           {currentStep > 1 && (
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
+            <button
+              type="button"
+              className="btn btn-secondary"
               onClick={handlePrevStep}
               disabled={isLoading}
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-primary)',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+              }}
             >
               <T zh="上一步" en="Previous" />
             </button>
           )}
-          
-          <button 
-            type="button" 
-            className="btn btn-secondary" 
+
+          <button
+            type="button"
+            className="btn btn-secondary"
             onClick={onClose}
             disabled={isLoading}
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-primary)',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+            }}
           >
             <T zh="取消" en="Cancel" />
           </button>
-          
-          <button 
-            type="button" 
-            className="btn btn-primary" 
+
+          <button
+            type="button"
+            className="btn btn-primary"
             onClick={handleNextStep}
             disabled={isLoading}
+            style={{
+              backgroundColor: 'var(--accent-primary)',
+              color: 'var(--text-inverse)',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              opacity: isLoading ? '0.7' : '1'
+            }}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.filter = 'brightness(1.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.filter = 'brightness(1)';
+            }}
           >
             {isLoading ? (
               <span><i className="fas fa-spinner fa-spin"></i> <T zh="处理中..." en="Processing..." /></span>

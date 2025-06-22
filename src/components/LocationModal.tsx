@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import { Location, CreateLocationRequest } from '../services/api-types';
 import { geocodingService, GeocodingResult } from '../lib/services/geocodingService';
+import '../styles/location-modal.css';
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -244,22 +245,22 @@ export default function LocationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="location-modal-overlay">
+      <div className="location-modal-container">
         {/* Modal Header */}
-        <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-semibold flex items-center">
-            <i className="fas fa-map-marker-alt mr-2 text-blue-500"></i>
+        <div className="location-modal-header">
+          <h2 className="location-modal-title">
+            <i className="fas fa-map-marker-alt"></i>
             <T zh="我们的足迹" en="Our Footprints" />
           </h2>
-          <div className="flex items-center">
-            <button 
-              onClick={() => setShowAddForm(!showAddForm)} 
-              className="mr-3 w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-sm transition"
+          <div className="location-modal-actions">
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="add-location-btn"
             >
               <i className={`fas ${showAddForm ? 'fa-times' : 'fa-plus'}`}></i>
             </button>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition">
+            <button onClick={onClose} className="close-modal-btn">
               <i className="fas fa-times"></i>
             </button>
           </div>
@@ -267,29 +268,27 @@ export default function LocationModal({
 
         {/* Error Message */}
         {error && (
-          <div className="error-message text-red-500 p-4 border-b">
+          <div className="error-message">
             {error}
           </div>
         )}
 
         {/* Success Message */}
         {success && (
-          <div className="success-message text-green-500 p-4 border-b bg-green-50 animate-fadeIn">
-            <div className="flex items-center">
-              <i className="fas fa-check-circle mr-2"></i>
-              {success}
-            </div>
+          <div className="success-message">
+            <i className="fas fa-check-circle"></i>
+            {success}
           </div>
         )}
 
         {/* Add Location Form */}
         {showAddForm && (
-          <div className="p-4 border-b animate-slideDown">
+          <div className="add-location-form">
             {/* 使用提示 */}
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="flex items-start">
-                <i className="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
-                <div className="text-sm text-blue-700">
+            <div className="form-tip">
+              <div className="form-tip-content">
+                <i className="fas fa-info-circle"></i>
+                <div className="form-tip-text">
                   <T
                     zh="💡 输入城市名称即可自动获取经纬度，支持中英文搜索。匹配的城市会自动填充坐标，也可点击搜索结果选择。"
                     en="💡 Enter city name to auto-fill coordinates, supports Chinese and English search. Matching cities will auto-fill coordinates, or click search results to select."
@@ -297,9 +296,9 @@ export default function LocationModal({
                 </div>
               </div>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="form-group relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+            <form onSubmit={handleSubmit} className="form-space-y-4">
+              <div className="form-group">
+                <label className="form-label">
                   <T zh="城市名称" en="City Name" />
                 </label>
                 <div className="relative">
@@ -309,31 +308,31 @@ export default function LocationModal({
                     name="name"
                     value={citySearchQuery || newLocation.name}
                     onChange={handleCitySearchChange}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`form-input ${isSearching ? 'form-input-with-icon' : ''}`}
                     placeholder={language === 'zh' ? '搜索城市，如：北京、巴黎' : 'Search city, e.g., Beijing, Paris'}
                     required
                     autoComplete="off"
                   />
                   {isSearching && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <i className="fas fa-spinner fa-spin text-gray-400"></i>
+                    <div className="input-icon">
+                      <i className="fas fa-spinner fa-spin"></i>
                     </div>
                   )}
                 </div>
 
                 {/* 搜索结果下拉列表 */}
                 {showCityResults && citySearchResults.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <div className="search-results">
                     {citySearchResults.map((city, index) => (
                       <div
                         key={index}
-                        className="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        className="search-result-item"
                         onClick={() => handleCitySelect(city)}
                       >
-                        <div className="font-medium text-gray-900">
+                        <div className="search-result-name">
                           {city.city || city.name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="search-result-address">
                           {city.formattedAddress}
                         </div>
                       </div>
@@ -343,18 +342,18 @@ export default function LocationModal({
 
                 {/* 搜索错误提示 */}
                 {searchError && (
-                  <div className="mt-1 text-sm text-red-600">
-                    <i className="fas fa-exclamation-triangle mr-1"></i>
+                  <div className="search-error">
+                    <i className="fas fa-exclamation-triangle"></i>
                     {searchError}
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid-cols-2">
                 <div className="form-group">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="form-label">
                     <T zh="纬度" en="Latitude" />
                     {newLocation.latitude !== 0 && (
-                      <span className="ml-1 text-xs text-green-600">
+                      <span style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: 'var(--accent-success, #10b981)' }}>
                         <i className="fas fa-check-circle"></i>
                       </span>
                     )}
@@ -365,16 +364,16 @@ export default function LocationModal({
                     name="latitude"
                     value={newLocation.latitude || ''}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="form-input"
                     placeholder={language === 'zh' ? '自动填充或手动输入' : 'Auto-filled or manual input'}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="form-label">
                     <T zh="经度" en="Longitude" />
                     {newLocation.longitude !== 0 && (
-                      <span className="ml-1 text-xs text-green-600">
+                      <span style={{ marginLeft: '0.25rem', fontSize: '0.75rem', color: 'var(--accent-success, #10b981)' }}>
                         <i className="fas fa-check-circle"></i>
                       </span>
                     )}
@@ -385,28 +384,28 @@ export default function LocationModal({
                     name="longitude"
                     value={newLocation.longitude || ''}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="form-input"
                     placeholder={language === 'zh' ? '自动填充或手动输入' : 'Auto-filled or manual input'}
                     required
                   />
                 </div>
               </div>
               <div className="form-group">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="form-label">
                   <T zh="备注" en="Note" />
                 </label>
                 <textarea
                   name="description"
                   value={newLocation.description}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="form-input"
                   rows={2}
                 ></textarea>
               </div>
-              <div className="flex justify-end">
+              <div className="form-submit-container">
                 <button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
+                  className="form-submit-btn"
                   disabled={loading}
                 >
                   {loading ? (
@@ -422,27 +421,27 @@ export default function LocationModal({
 
         {/* 删除确认对话框 */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5 animate-fadeIn">
-              <h3 className="text-lg font-medium mb-3">
+          <div className="delete-confirm-overlay">
+            <div className="delete-confirm-container">
+              <h3 className="delete-confirm-title">
                 <T zh="确认删除" en="Confirm Deletion" />
               </h3>
-              <p className="mb-4">
-                <T 
-                  zh="确定要删除这个地点吗？此操作无法撤销。" 
-                  en="Are you sure you want to delete this location? This action cannot be undone." 
+              <p className="delete-confirm-text">
+                <T
+                  zh="确定要删除这个地点吗？此操作无法撤销。"
+                  en="Are you sure you want to delete this location? This action cannot be undone."
                 />
               </p>
-              <div className="flex justify-end space-x-3">
-                <button 
+              <div className="delete-confirm-actions">
+                <button
                   onClick={cancelDelete}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="delete-cancel-btn"
                 >
                   <T zh="取消" en="Cancel" />
                 </button>
-                <button 
+                <button
                   onClick={confirmDelete}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  className="delete-confirm-btn"
                   disabled={loading}
                 >
                   {loading ? (
@@ -457,52 +456,48 @@ export default function LocationModal({
         )}
 
         {/* City List */}
-        <div className="flex-1 overflow-auto p-4">
+        <div className="city-list-container">
           {loading && !locations.length ? (
-            <div className="text-center py-8">
-              <i className="fas fa-spinner fa-spin mr-2"></i>
+            <div className="loading-container">
+              <i className="fas fa-spinner fa-spin"></i>
               <T zh="加载中..." en="Loading..." />
             </div>
           ) : locations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <i className="fas fa-map-pin text-4xl mb-3 text-gray-300"></i>
+            <div className="empty-state">
+              <i className="fas fa-map-pin"></i>
               <p>
                 <T zh="还没有添加地点，开始记录你们的足迹吧！" en="No places added yet. Start recording your journey together!" />
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="city-list">
               {locations.map((location, index) => (
-                <div key={location.id} className="city-item flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className={`city-color-indicator w-10 h-10 rounded-full ${getCityColor(index)} flex items-center justify-center text-white mr-3`}>
+                <div key={location.id} className="city-item">
+                  <div className={`city-color-indicator ${getCityColor(index)}`}>
                     {location.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-grow">
-                    <h3 className="font-medium">{location.name}</h3>
-                    <div className="text-xs text-gray-500">
+                  <div className="city-info">
+                    <h3 className="city-name">{location.name}</h3>
+                    <div className="city-date">
                       {location.created_at ? new Date(location.created_at).toLocaleDateString() : '-'}
                     </div>
                   </div>
                   {onDeleteLocation && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(location.id);
                       }}
-                      className={`p-2 rounded-full transition-all transform duration-200 relative group ${
-                        deletingId === location.id 
-                          ? 'bg-gray-100 cursor-not-allowed' 
-                          : 'text-gray-400 hover:text-red-500 hover:bg-red-50 hover:scale-110'
-                      }`}
+                      className="city-delete-btn"
                       aria-label={language === 'zh' ? '删除' : 'Delete'}
                       disabled={deletingId === location.id}
                     >
                       {deletingId === location.id ? (
-                        <i className="fas fa-spinner fa-spin text-gray-500"></i>
+                        <i className="fas fa-spinner fa-spin"></i>
                       ) : (
                         <i className="fas fa-trash-alt"></i>
                       )}
-                      <span className="absolute right-full mr-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      <span className="delete-tooltip">
                         <T zh="删除" en="Delete" />
                       </span>
                     </button>
@@ -514,11 +509,11 @@ export default function LocationModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-3 border-t bg-gray-50 flex justify-center">
-          <div className="text-sm text-gray-500">
-            <T 
-              zh={`共 ${locations.length} 个城市`} 
-              en={`${locations.length} ${locations.length === 1 ? 'city' : 'cities'} in total`} 
+        <div className="location-modal-footer">
+          <div className="location-count">
+            <T
+              zh={`共 ${locations.length} 个城市`}
+              en={`${locations.length} ${locations.length === 1 ? 'city' : 'cities'} in total`}
             />
           </div>
         </div>

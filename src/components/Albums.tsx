@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { T, useLanguage } from './LanguageContext';
 import CreateAlbumModal from './CreateAlbumModal';
 import UploadPhotosModal from './UploadPhotosModal';
@@ -23,6 +24,7 @@ interface Photo {
 
 export default function Albums() {
   const { language } = useLanguage();
+  const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAlbumDetailOpen, setIsAlbumDetailOpen] = useState(false);
@@ -391,18 +393,28 @@ export default function Albums() {
         <div className="search-filter-group">
           <div className="search-box">
             <i className="fas fa-search"></i>
-            <input 
-              type="text" 
-              placeholder={language === 'zh' ? '搜索相册...' : 'Search albums...'} 
+            <input
+              type="text"
+              placeholder={language === 'zh' ? '搜索相册...' : 'Search albums...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-        <button className="btn btn-primary" onClick={handleOpenCreateModal}>
-          <i className="fas fa-plus"></i>
-          <T zh="新建相册" en="New Album" />
-        </button>
+        <div className="header-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={() => router.push('/gallery')}
+            title={language === 'zh' ? '切换到照片墙视图' : 'Switch to Gallery View'}
+          >
+            <i className="fas fa-th"></i>
+            <T zh="照片墙" en="Gallery" />
+          </button>
+          <button className="btn btn-primary" onClick={handleOpenCreateModal}>
+            <i className="fas fa-plus"></i>
+            <T zh="新建相册" en="New Album" />
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -700,7 +712,7 @@ export default function Albums() {
       
       <style jsx>{`
         .album-detail-modal {
-          background: white;
+          background: var(--bg-card, white);
           border-radius: 12px;
           width: 90%;
           max-width: 1200px;
@@ -708,22 +720,23 @@ export default function Albums() {
           overflow-y: auto;
           padding: 24px;
           position: relative;
-          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+          box-shadow: var(--shadow-lg, 0 5px 20px rgba(0, 0, 0, 0.2));
+          border: 1px solid var(--border-primary, transparent);
         }
-        
+
         .modal-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 16px;
           padding-bottom: 16px;
-          border-bottom: 1px solid #eee;
+          border-bottom: 1px solid var(--border-primary, #eee);
         }
-        
+
         .modal-header h2 {
           margin: 0;
           font-size: 24px;
-          color: #333;
+          color: var(--text-primary, #333);
         }
         
         .modal-actions {
@@ -741,37 +754,37 @@ export default function Albums() {
           border: none;
           cursor: pointer;
           font-size: 14px;
-          background: #f0f0f0;
-          color: #333;
+          background: var(--accent-secondary, #f0f0f0);
+          color: var(--text-primary, #333);
           transition: background 0.2s;
         }
-        
+
         .action-btn:hover {
-          background: #e0e0e0;
+          background: var(--bg-tertiary, #e0e0e0);
         }
-        
+
         .action-btn i {
           font-size: 14px;
         }
-        
+
         .select-btn {
-          background: #e8f4fd;
-          color: #0078d4;
+          background: var(--accent-secondary, #e8f4fd);
+          color: var(--accent-primary, #0078d4);
         }
-        
+
         .select-btn:hover {
-          background: #d0e8fa;
+          background: var(--bg-tertiary, #d0e8fa);
         }
-        
+
         .delete-btn {
-          background: #fde8e8;
-          color: #d40000;
+          background: rgba(248, 81, 73, 0.1);
+          color: var(--accent-danger, #d40000);
         }
-        
+
         .delete-btn:hover:not(:disabled) {
-          background: #fad0d0;
+          background: rgba(248, 81, 73, 0.2);
         }
-        
+
         .delete-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
@@ -783,40 +796,41 @@ export default function Albums() {
           align-items: center;
           padding: 10px 16px;
           margin: 16px 0;
-          background: #f8f8f8;
+          background: var(--bg-secondary, #f8f8f8);
           border-radius: 8px;
+          border: 1px solid var(--border-primary, transparent);
         }
-        
+
         .selection-status {
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary, #333);
         }
-        
+
         .selection-actions {
           display: flex;
           gap: 8px;
         }
-        
+
         .close-btn {
           background: none;
           border: none;
           font-size: 20px;
           cursor: pointer;
-          color: #666;
+          color: var(--text-secondary, #666);
           padding: 5px;
         }
-        
+
         .album-description {
           margin-bottom: 20px;
-          color: #666;
+          color: var(--text-secondary, #666);
         }
-        
+
         .album-meta-info {
           display: flex;
           gap: 16px;
           margin-top: 8px;
           font-size: 14px;
-          color: #888;
+          color: var(--text-tertiary, #888);
         }
         
         .album-meta-info i {
@@ -829,41 +843,43 @@ export default function Albums() {
           align-items: center;
           justify-content: center;
           padding: 40px 0;
-          color: #aaa;
+          color: var(--text-muted, #aaa);
         }
-        
+
         .empty-photos i {
           font-size: 48px;
           margin-bottom: 16px;
         }
-        
+
         .album-photos-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
           gap: 12px;
           margin-top: 20px;
         }
-        
+
         .photo-item {
           aspect-ratio: 1;
           overflow: hidden;
           border-radius: 8px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--shadow-sm, 0 2px 5px rgba(0, 0, 0, 0.1));
           cursor: pointer;
           transition: transform 0.2s ease;
           position: relative;
+          border: 1px solid var(--border-primary, transparent);
         }
-        
+
         .photo-item:hover {
           transform: scale(1.02);
+          box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
         }
-        
+
         .photo-item.selection-mode:hover {
           transform: none;
         }
-        
+
         .photo-item.selection-mode.selected {
-          box-shadow: 0 0 0 3px #0078d4;
+          box-shadow: 0 0 0 3px var(--accent-primary, #0078d4);
         }
         
         .selection-checkbox {
@@ -872,16 +888,17 @@ export default function Albums() {
           right: 8px;
           width: 24px;
           height: 24px;
-          background: rgba(255, 255, 255, 0.8);
+          background: var(--bg-overlay, rgba(255, 255, 255, 0.8));
           border-radius: 4px;
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 2;
+          border: 1px solid var(--border-primary, rgba(0, 0, 0, 0.1));
         }
-        
+
         .selection-checkbox i {
-          color: #0078d4;
+          color: var(--accent-primary, #0078d4);
           font-size: 18px;
         }
         

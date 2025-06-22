@@ -9,14 +9,14 @@
   flex-direction: column;
   align-items: center;
   padding: 30px;
-  border: 2px dashed #ddd;
+  border: 2px dashed var(--border-primary, #ddd);
   border-radius: 8px;
   margin-bottom: 20px;
   transition: border-color 0.3s;
 }
 
 .upload-area:hover {
-  border-color: #4a90e2;
+  border-color: var(--accent-primary, #4a90e2);
 }
 
 .upload-button {
@@ -36,20 +36,20 @@
 
 .upload-button i {
   font-size: 3rem;
-  color: #4a90e2;
+  color: var(--accent-primary, #4a90e2);
   margin-bottom: 10px;
 }
 
 .upload-button span {
   font-size: 1.1rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .upload-info {
   margin-top: 15px;
   font-size: 0.85rem;
-  color: #777;
+  color: var(--text-secondary, #777);
   text-align: center;
 }
 
@@ -108,27 +108,25 @@
   background-color: rgba(220, 53, 69, 0.8);
 }
 
-/* 深色模式 */
-@media (prefers-color-scheme: dark) {
-  .upload-area {
-    border-color: #444;
-  }
-  
-  .upload-area:hover {
-    border-color: #5a9ae2;
-  }
-  
-  .upload-button span {
-    color: #eee;
-  }
-  
-  .upload-info {
-    color: #aaa;
-  }
-  
-  .preview-container h3 {
-    color: #eee;
-  }
+/* 深色主题适配 */
+[data-theme="dark"] .upload-area {
+  border-color: var(--border-primary, #444);
+}
+
+[data-theme="dark"] .upload-area:hover {
+  border-color: var(--accent-primary, #5a9ae2);
+}
+
+[data-theme="dark"] .upload-button span {
+  color: var(--text-primary, #eee);
+}
+
+[data-theme="dark"] .upload-info {
+  color: var(--text-secondary, #aaa);
+}
+
+[data-theme="dark"] .preview-container h3 {
+  color: var(--text-primary, #eee);
 }
 
 /* 添加或更新以下样式 */

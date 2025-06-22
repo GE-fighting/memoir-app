@@ -139,18 +139,19 @@ export default function Account() {
         }
         
         .account-card {
-          background: white;
+          background: var(--bg-card, white);
           border-radius: 12px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+          box-shadow: var(--shadow-md, 0 2px 10px rgba(0,0,0,0.05));
           padding: 24px;
           width: 100%;
           max-width: 500px;
+          border: 1px solid var(--border-primary, transparent);
         }
-        
+
         .card-title {
           font-size: 1.5rem;
           margin-bottom: 20px;
-          color: #333;
+          color: var(--text-primary, #333);
           text-align: center;
           font-weight: 600;
         }
@@ -171,19 +172,19 @@ export default function Account() {
           width: 45px;
           height: 45px;
           border-radius: 50%;
-          background: #6c5ce7;
-          color: white;
+          background: var(--accent-primary, #6c5ce7);
+          color: var(--text-inverse, white);
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 18px;
           font-weight: bold;
           margin-right: -10px;
-          border: 2px solid white;
+          border: 2px solid var(--bg-card, white);
         }
-        
+
         .couple-avatar:last-child {
-          background: #fd79a8;
+          background: var(--accent-secondary, #fd79a8);
           margin-right: 0;
         }
         
@@ -195,40 +196,57 @@ export default function Account() {
         .couple-name {
           font-weight: 600;
           font-size: 18px;
+          color: var(--text-primary, #333);
         }
-        
+
         .couple-date {
           font-size: 14px;
-          color: #666;
+          color: var(--text-secondary, #666);
         }
-        
+
         .couple-date i {
-          color: #fd79a8;
+          color: var(--accent-secondary, #fd79a8);
           margin-right: 5px;
         }
         
         .form-section {
-          border-top: 1px solid #eee;
+          border-top: 1px solid var(--border-primary, #eee);
           padding-top: 20px;
         }
-        
+
         .form-group {
           margin-bottom: 16px;
         }
-        
+
         .form-group label {
           display: block;
           margin-bottom: 6px;
           font-size: 14px;
-          color: #555;
+          color: var(--text-secondary, #555);
         }
-        
+
         .form-input {
           width: 100%;
           padding: 10px;
-          border: 1px solid #ddd;
+          border: 1px solid var(--border-primary, #ddd);
           border-radius: 6px;
           font-size: 14px;
+          background: var(--bg-card, white);
+          color: var(--text-primary, #333);
+          transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: var(--accent-primary, #6c5ce7);
+          box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.1);
+        }
+
+        .form-input:disabled,
+        .form-input[readonly] {
+          background: var(--bg-secondary, #f5f5f5);
+          color: var(--text-muted, #999);
+          cursor: not-allowed;
         }
         
         .btn {
@@ -245,14 +263,29 @@ export default function Account() {
           width: 100%;
           margin-top: 20px;
         }
-        
+
         .btn-primary {
-          background: #6c5ce7;
-          color: white;
+          background: var(--accent-primary, #6c5ce7);
+          color: var(--text-inverse, white);
         }
-        
+
         .btn-primary:hover {
-          background: #5b4ecc;
+          background: var(--accent-hover, #5b4ecc);
+        }
+
+        /* 深色主题特殊适配 */
+        :global([data-theme="dark"]) .couple-avatar {
+          border-color: var(--bg-card, #161b22);
+        }
+
+        :global([data-theme="dark"]) .form-input:disabled,
+        :global([data-theme="dark"]) .form-input[readonly] {
+          background: var(--bg-tertiary, #21262d);
+          color: var(--text-muted, #6e7681);
+        }
+
+        :global([data-theme="dark"]) .form-input:focus {
+          box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
         }
       `}</style>
     </div>

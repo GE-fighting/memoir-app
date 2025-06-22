@@ -9,6 +9,7 @@
 import React, { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import { LanguageSwitcher, T, useLanguage } from './LanguageContext';
+import ThemeSwitcher from './ThemeSwitcher';
 import LogoutButton from './logout-button';
 
 /**
@@ -51,15 +52,18 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
           
           {/* 右侧操作区域 */}
           <div className="header-actions">
+            {/* 主题切换器 */}
+            <ThemeSwitcher />
+
             {/* 语言切换器，移到顶部操作区域 */}
             <LanguageSwitcher />
-            
+
             {/* 通知图标 */}
             <div className="notification-bell">
               <i className="far fa-bell"></i>
               <span className="badge">2</span>
             </div>
-            
+
             {/* 登出按钮 */}
             <LogoutButton className="header-logout-btn">
               <i className="fas fa-sign-out-alt mr-2"></i>

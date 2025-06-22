@@ -27,6 +27,7 @@
     "framer-motion": "^12.12.1",
     "graceful-fs": "^4.2.11",
     "next": "15.3.2",
+    "pm2": "^6.0.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.4",

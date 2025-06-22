@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--bg-modal, rgba(0, 0, 0, 0.5));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,14 +13,15 @@
 }
 
 .modal-container {
-  background-color: #fff;
+  background-color: var(--bg-card, #fff);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   animation: modal-appear 0.3s ease;
+  border: 1px solid var(--border-primary, transparent);
 }
 
 /* 宽模态框样式 */
@@ -44,13 +45,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-primary, #eee);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .close-button {
@@ -58,12 +59,12 @@
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
-  color: #999;
+  color: var(--text-secondary, #999);
   transition: color 0.2s;
 }
 
 .close-button:hover {
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .modal-body {
@@ -75,7 +76,7 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-primary, #eee);
 }
 
 /* 步骤指示器样式 */
@@ -500,129 +501,127 @@
   cursor: not-allowed;
 }
 
-/* 深色模式 */
-@media (prefers-color-scheme: dark) {
-  .modal-container {
-    background-color: #222;
-    color: #eee;
-  }
-  
-  .modal-header {
-    border-bottom-color: #333;
-  }
-  
-  .modal-header h2 {
-    color: #eee;
-  }
-  
-  .close-button {
-    color: #777;
-  }
-  
-  .close-button:hover {
-    color: #eee;
-  }
-  
-  .modal-footer {
-    border-top-color: #333;
-  }
-  
-  .form-group label {
-    color: #ddd;
-  }
-  
-  .form-group input,
-  .form-group textarea,
-  .album-select {
-    background-color: #333;
-    border-color: #444;
-    color: #eee;
-  }
-  
-  .form-group input:focus,
-  .form-group textarea:focus,
-  .album-select:focus {
-    border-color: #4a90e2;
-  }
-  
-  .btn-secondary {
-    background-color: #333;
-    color: #eee;
-  }
-  
-  .btn-secondary:hover {
-    background-color: #444;
-  }
-  
-  .step-indicator::before {
-    background-color: #444;
-  }
-  
-  .step-number {
-    background-color: #333;
-    border-color: #555;
-    color: #ddd;
-  }
-  
-  .step-label {
-    color: #bbb;
-  }
-  
-  .step-subtitle {
-    color: #ddd;
-  }
-  
-  .location-card,
-  .photo-card {
-    background-color: #333;
-    border-color: #444;
-  }
-  
-  .location-card:hover,
-  .photo-card:hover {
-    border-color: #4a90e2;
-    background-color: #383838;
-  }
-  
-  .location-card.selected {
-    background-color: rgba(74, 144, 226, 0.15);
-  }
-  
-  .location-details p {
-    color: #aaa;
-  }
-  
-  .empty-state,
-  .loading-container {
-    color: #aaa;
-  }
-  
-  .photo-card.is-cover {
-    border-color: #f5b400;
-    box-shadow: 0 2px 8px rgba(245, 180, 0, 0.2);
-  }
-  
-  .cover-indicator {
-    background-color: rgba(51, 51, 51, 0.8);
-    color: #aaa;
-  }
-  
-  .cover-indicator:hover {
-    background-color: rgba(51, 51, 51, 0.9);
-    color: #f5b400;
-  }
-  
-  .cover-photo-tip {
-    background-color: rgba(74, 144, 226, 0.05);
-    border-left-color: #4a90e2;
-  }
-  
-  .selected-cover {
-    background-color: rgba(245, 180, 0, 0.05);
-    border-color: #f5b400;
-  }
-  
-  .selected-cover h4 {
-    color: #f5b400;
-  }
-} 
+/* 深色主题适配 */
+[data-theme="dark"] .modal-container {
+  background-color: var(--bg-card, #222);
+  color: var(--text-primary, #eee);
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom-color: var(--border-primary, #333);
+}
+
+[data-theme="dark"] .modal-header h2 {
+  color: var(--text-primary, #eee);
+}
+
+[data-theme="dark"] .close-button {
+  color: var(--text-secondary, #777);
+}
+
+[data-theme="dark"] .close-button:hover {
+  color: var(--text-primary, #eee);
+}
+
+[data-theme="dark"] .modal-footer {
+  border-top-color: var(--border-primary, #333);
+}
+
+[data-theme="dark"] .form-group label {
+  color: var(--text-secondary, #ddd);
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] .album-select {
+  background-color: var(--bg-tertiary, #333);
+  border-color: var(--border-primary, #444);
+  color: var(--text-primary, #eee);
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group textarea:focus,
+[data-theme="dark"] .album-select:focus {
+  border-color: var(--accent-primary, #4a90e2);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background-color: var(--bg-tertiary, #333);
+  color: var(--text-primary, #eee);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background-color: var(--border-primary, #444);
+}
+
+[data-theme="dark"] .step-indicator::before {
+  background-color: var(--border-primary, #444);
+}
+
+[data-theme="dark"] .step-number {
+  background-color: var(--bg-tertiary, #333);
+  border-color: var(--border-primary, #555);
+  color: var(--text-secondary, #ddd);
+}
+
+[data-theme="dark"] .step-label {
+  color: var(--text-secondary, #bbb);
+}
+
+[data-theme="dark"] .step-subtitle {
+  color: var(--text-secondary, #ddd);
+}
+
+[data-theme="dark"] .location-card,
+[data-theme="dark"] .photo-card {
+  background-color: var(--bg-tertiary, #333);
+  border-color: var(--border-primary, #444);
+}
+
+[data-theme="dark"] .location-card:hover,
+[data-theme="dark"] .photo-card:hover {
+  border-color: var(--accent-primary, #4a90e2);
+  background-color: var(--bg-tertiary, #383838);
+}
+
+[data-theme="dark"] .location-card.selected {
+  background-color: rgba(88, 166, 255, 0.15);
+}
+
+[data-theme="dark"] .location-details p {
+  color: var(--text-muted, #aaa);
+}
+
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .loading-container {
+  color: var(--text-muted, #aaa);
+}
+
+[data-theme="dark"] .photo-card.is-cover {
+  border-color: var(--accent-warning, #f5b400);
+  box-shadow: 0 2px 8px rgba(227, 179, 65, 0.2);
+}
+
+[data-theme="dark"] .cover-indicator {
+  background-color: var(--bg-overlay, rgba(51, 51, 51, 0.8));
+  color: var(--text-muted, #aaa);
+}
+
+[data-theme="dark"] .cover-indicator:hover {
+  background-color: var(--bg-overlay, rgba(51, 51, 51, 0.9));
+  color: var(--accent-warning, #f5b400);
+}
+
+[data-theme="dark"] .cover-photo-tip {
+  background-color: rgba(88, 166, 255, 0.05);
+  border-left-color: var(--accent-primary, #4a90e2);
+}
+
+[data-theme="dark"] .selected-cover {
+  background-color: rgba(227, 179, 65, 0.05);
+  border-color: var(--accent-warning, #f5b400);
+}
+
+[data-theme="dark"] .selected-cover h4 {
+  color: var(--accent-warning, #f5b400);
+}

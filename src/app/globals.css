@@ -94,15 +94,18 @@ button, .btn {
 input, select, textarea {
   font-family: inherit;
   font-size: 1rem;
-  border: 1px solid var(--gray);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius);
   padding: 10px 15px;
   outline: none;
   transition: var(--transition);
+  color: var(--text-primary);
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: var(--primary);
+  border-color: var(--border-focus);
+  background-color: var(--bg-primary);
   box-shadow: 0 0 0 2px rgba(106, 123, 217, 0.2);
 }
 
@@ -113,13 +116,14 @@ input:focus, select:focus, textarea:focus {
   .sidebar {
     width: 260px;
     height: 100vh;
-    background-color: white;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-primary);
     position: fixed;
     left: 0;
     top: 0;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
     transition: var(--transition);
     z-index: 10;
   }
@@ -133,7 +137,7 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--gray);
+    border-bottom: 1px solid var(--border-primary);
   }
 
   .logo {
@@ -163,13 +167,13 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
     gap: 15px;
     padding: 12px 20px;
-    color: var(--dark);
+    color: var(--text-secondary);
     transition: var(--transition);
   }
 
   .menu-item:hover, .menu-item.active {
-    background-color: var(--primary-light);
-    color: white;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
   }
 
   .sidebar.collapsed .menu-item span {
@@ -181,7 +185,7 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-top: 1px solid var(--gray);
+    border-top: 1px solid var(--border-primary);
   }
 
   .profile-preview {
@@ -228,7 +232,7 @@ input:focus, select:focus, textarea:focus {
   .page-title {
     font-size: 1.8rem;
     font-weight: 700;
-    color: var(--dark);
+    color: var(--text-primary);
   }
 
   .header-actions {
@@ -272,7 +276,7 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     align-items: center;
     margin-right: 15px;
-    border: 1px solid var(--gray);
+    border: 1px solid var(--border-primary);
   }
 
   .language-btn {
@@ -282,7 +286,7 @@ input:focus, select:focus, textarea:focus {
     font-weight: 500;
     transition: var(--transition);
     background: transparent;
-    color: var(--gray-dark);
+    color: var(--text-tertiary);
   }
 
   .language-btn.active {
@@ -291,7 +295,7 @@ input:focus, select:focus, textarea:focus {
   }
   
   .language-divider {
-    color: var(--gray);
+    color: var(--border-primary);
     font-size: 0.8rem;
   }
 
@@ -304,16 +308,17 @@ input:focus, select:focus, textarea:focus {
   }
 
   .stat-card {
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
     padding: 20px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
     transition: var(--transition);
   }
 
   .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: var(--shadow-dark);
+    box-shadow: var(--shadow-lg);
   }
 
   .stat-header {
@@ -324,7 +329,7 @@ input:focus, select:focus, textarea:focus {
   }
 
   .stat-title {
-    color: var(--gray-dark);
+    color: var(--text-tertiary);
     font-size: 0.9rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -363,7 +368,7 @@ input:focus, select:focus, textarea:focus {
   .stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--dark);
+    color: var(--text-primary);
     margin-bottom: 5px;
   }
 
@@ -391,10 +396,11 @@ input:focus, select:focus, textarea:focus {
   }
 
   .chart-container {
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
     padding: 20px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
   }
 
   .chart-header {
@@ -407,13 +413,14 @@ input:focus, select:focus, textarea:focus {
   .chart-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--dark);
+    color: var(--text-primary);
   }
 
   .period-selector {
     display: flex;
     gap: 5px;
-    background-color: var(--gray);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 20px;
     padding: 5px;
   }
@@ -424,12 +431,13 @@ input:focus, select:focus, textarea:focus {
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
+    color: var(--text-secondary);
   }
 
   .period-option.active {
-    background-color: white;
-    color: var(--primary);
-    box-shadow: var(--shadow);
+    background-color: var(--bg-card);
+    color: var(--accent-primary);
+    box-shadow: var(--shadow-sm);
   }
 
   .chart-body {
@@ -442,7 +450,8 @@ input:focus, select:focus, textarea:focus {
   .chart-placeholder {
     width: 100%;
     height: 100%;
-    background-color: var(--gray);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
     display: flex;
     align-items: center;
@@ -452,8 +461,46 @@ input:focus, select:focus, textarea:focus {
 
   .chart-placeholder::after {
     content: var(--chart-text);
-    color: var(--gray-dark);
+    color: var(--text-tertiary);
     font-size: 1.2rem;
+  }
+
+  /* 地图容器样式 */
+  .map-section {
+    margin-top: 30px;
+  }
+
+  .map-container {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+  }
+
+  .map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .map-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+  }
+
+  .map-subtitle {
+    color: var(--text-tertiary);
+  }
+
+  .map-body {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-primary);
   }
 
   /* 时间轴样式 */
@@ -479,7 +526,7 @@ input:focus, select:focus, textarea:focus {
     left: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--gray-dark);
+    color: var(--text-tertiary);
   }
 
   .search-box input {
@@ -500,10 +547,11 @@ input:focus, select:focus, textarea:focus {
   .timeline-item {
     display: flex;
     gap: 20px;
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
     padding: 0;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
     overflow: hidden;
   }
 
@@ -549,11 +597,11 @@ input:focus, select:focus, textarea:focus {
   .timeline-title {
     font-size: 1.3rem;
     font-weight: 600;
-    color: var(--dark);
+    color: var(--text-primary);
   }
 
   .timeline-date {
-    color: var(--gray-dark);
+    color: var(--text-tertiary);
     display: flex;
     align-items: center;
     gap: 5px;
@@ -561,7 +609,7 @@ input:focus, select:focus, textarea:focus {
   }
 
   .timeline-description {
-    color: var(--dark);
+    color: var(--text-secondary);
     line-height: 1.5;
     flex: 1;
   }
@@ -572,7 +620,7 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid var(--gray);
+    border-top: 1px solid var(--border-primary);
   }
 
   .timeline-user {
@@ -590,11 +638,12 @@ input:focus, select:focus, textarea:focus {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: var(--gray);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--dark);
+    color: var(--text-secondary);
     transition: var(--transition);
   }
 
@@ -611,16 +660,17 @@ input:focus, select:focus, textarea:focus {
   }
 
   .album-card {
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
     overflow: hidden;
     transition: var(--transition);
   }
 
   .album-card:hover {
     transform: translateY(-5px);
-    box-shadow: var(--shadow-dark);
+    box-shadow: var(--shadow-lg);
   }
 
   .album-cover {
@@ -684,16 +734,17 @@ input:focus, select:focus, textarea:focus {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: var(--bg-overlay);
+    border: 1px solid var(--border-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--dark);
+    color: var(--text-primary);
   }
 
   .album-actions button:hover {
-    background-color: white;
-    color: var(--primary);
+    background-color: var(--bg-card);
+    color: var(--accent-primary);
   }
 
   /* 心愿画卷样式 */
@@ -704,10 +755,11 @@ input:focus, select:focus, textarea:focus {
   }
 
   .wishlist-section {
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
     padding: 25px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
   }
 
   .wishlist-header {
@@ -721,7 +773,7 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--dark);
+    color: var(--text-primary);
   }
 
   .wishlist-title i {
@@ -741,17 +793,17 @@ input:focus, select:focus, textarea:focus {
   }
 
   .wishlist-card {
-    background-color: var(--light);
+    background-color: var(--bg-card);
     border-radius: var(--border-radius);
     overflow: hidden;
     position: relative;
-    border: 1px solid var(--gray);
+    border: 1px solid var(--border-primary);
     transition: var(--transition);
   }
 
   .wishlist-card:hover {
     transform: translateY(-5px);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
   }
 
   .wishlist-card-status {
@@ -761,12 +813,13 @@ input:focus, select:focus, textarea:focus {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-sm);
   }
 
   .wishlist-card-status.wishlist {
@@ -805,12 +858,12 @@ input:focus, select:focus, textarea:focus {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 10px;
-    color: var(--dark);
+    color: var(--text-primary);
   }
 
   .wishlist-card-desc {
     font-size: 0.9rem;
-    color: var(--gray-dark);
+    color: var(--text-secondary);
     margin-bottom: 12px;
     height: 60px;
     overflow: hidden;
@@ -833,7 +886,8 @@ input:focus, select:focus, textarea:focus {
     gap: 5px;
     padding: 4px 8px;
     border-radius: 12px;
-    background-color: var(--gray);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
   }
 
   .wishlist-date.planned {
@@ -880,17 +934,18 @@ input:focus, select:focus, textarea:focus {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--dark);
-    box-shadow: var(--shadow);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-sm);
   }
 
   .wishlist-action-btn:hover {
-    background-color: var(--primary);
-    color: white;
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
   }
 
   /* 账户页面样式 */
@@ -901,19 +956,20 @@ input:focus, select:focus, textarea:focus {
   }
 
   .card {
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     border-radius: var(--border-radius);
     padding: 25px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-md);
   }
 
   .card-title {
     font-size: 1.4rem;
     font-weight: 600;
-    color: var(--dark);
+    color: var(--text-primary);
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid var(--gray);
+    border-bottom: 1px solid var(--border-primary);
   }
 
   .couple-info {
@@ -954,7 +1010,7 @@ input:focus, select:focus, textarea:focus {
   .couple-name {
     font-size: 1.2rem;
     font-weight: 600;
-    color: var(--dark);
+    color: var(--text-primary);
     margin-bottom: 5px;
   }
 
@@ -1292,11 +1348,11 @@ input:focus, select:focus, textarea:focus {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: white;
-  color: #3b82f6;
+  background-color: var(--bg-card, white);
+  color: var(--accent-primary, #3b82f6);
   padding: 8px 16px;
   border-radius: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md, 0 2px 10px rgba(0, 0, 0, 0.1));
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -1304,16 +1360,17 @@ input:focus, select:focus, textarea:focus {
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  border: 1px solid var(--border-primary, transparent);
 }
 
 .floating-footprints-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
 .count-badge {
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--accent-primary, #3b82f6);
+  color: var(--text-inverse, white);
   border-radius: 50%;
   width: 18px;
   height: 18px;

@@ -5,7 +5,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/styles/themes.css";
 import { LanguageProvider } from "@/components/LanguageContext";
+import { ThemeProvider } from "@/contexts/theme-context";
 import { Providers } from "@/components/providers";
 
 /**
@@ -55,14 +57,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* 
+        {/*
           使用Providers包装整个应用，提供认证上下文
-          然后是LanguageProvider提供语言设置和翻译功能
+          然后是ThemeProvider提供主题切换功能
+          最后是LanguageProvider提供语言设置和翻译功能
         */}
         <Providers>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              {children}
+            </LanguageProvider>
+          </ThemeProvider>
         </Providers>
       </body>
     </html>

@@ -242,21 +242,22 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
           left: 0;
           right: 0;
           bottom: 0;
-          background-color: rgba(0, 0, 0, 0.5);
+          background-color: var(--bg-modal, rgba(0, 0, 0, 0.5));
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 1000;
         }
-        
+
         .modal-container {
-          background: white;
+          background: var(--bg-card, white);
           border-radius: 12px;
           width: 90%;
           max-width: 500px;
           max-height: 90vh;
           overflow-y: auto;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+          box-shadow: var(--shadow-lg, 0 5px 15px rgba(0, 0, 0, 0.2));
+          border: 1px solid var(--border-primary, transparent);
         }
         
         .modal-header {
@@ -264,21 +265,21 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
           justify-content: space-between;
           align-items: center;
           padding: 16px 20px;
-          border-bottom: 1px solid #eee;
+          border-bottom: 1px solid var(--border-primary, #eee);
         }
-        
+
         .modal-header h2 {
           margin: 0;
           font-size: 20px;
           font-weight: 600;
-          color: #333;
+          color: var(--text-primary, #333);
         }
-        
+
         .close-button {
           background: none;
           border: none;
           font-size: 20px;
-          color: #999;
+          color: var(--text-secondary, #999);
           cursor: pointer;
         }
         
@@ -294,16 +295,18 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
           display: block;
           margin-bottom: 8px;
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary, #333);
         }
-        
+
         .form-group input,
         .form-group textarea {
           width: 100%;
           padding: 10px 12px;
-          border: 1px solid #ddd;
+          border: 1px solid var(--border-primary, #ddd);
           border-radius: 6px;
           font-size: 16px;
+          background: var(--bg-card, white);
+          color: var(--text-primary, #333);
         }
         
         .form-group textarea {
@@ -318,7 +321,7 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
         .category-option {
           flex: 1;
           padding: 10px;
-          background: #f5f5f5;
+          background: var(--bg-secondary, #f5f5f5);
           border: 2px solid transparent;
           border-radius: 6px;
           display: flex;
@@ -328,19 +331,19 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
           cursor: pointer;
           transition: all 0.2s ease;
         }
-        
+
         .category-option i {
           font-size: 18px;
-          color: #666;
+          color: var(--text-secondary, #666);
         }
-        
+
         .category-option.selected {
-          border-color: #6c5ce7;
-          background: #f0eeff;
+          border-color: var(--accent-primary, #6c5ce7);
+          background: var(--bg-tertiary, #f0eeff);
         }
-        
+
         .category-option.selected i {
-          color: #6c5ce7;
+          color: var(--accent-primary, #6c5ce7);
         }
 
         .priority-selector {
@@ -351,7 +354,7 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
         .priority-option {
           flex: 1;
           padding: 10px;
-          background: #f5f5f5;
+          background: var(--bg-secondary, #f5f5f5);
           border: 2px solid transparent;
           border-radius: 6px;
           display: flex;
@@ -361,42 +364,42 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
           cursor: pointer;
           transition: all 0.2s ease;
         }
-        
+
         .priority-option i {
           font-size: 18px;
-          color: #666;
+          color: var(--text-secondary, #666);
         }
-        
+
         .priority-option.selected {
-          border-color: #6c5ce7;
-          background: #f0eeff;
+          border-color: var(--accent-primary, #6c5ce7);
+          background: var(--bg-tertiary, #f0eeff);
         }
-        
+
         .priority-option.selected.high {
-          border-color: #e74c3c;
-          background: #ffeeee;
+          border-color: var(--accent-danger, #e74c3c);
+          background: rgba(248, 81, 73, 0.1);
         }
-        
+
         .priority-option.selected.high i {
-          color: #e74c3c;
+          color: var(--accent-danger, #e74c3c);
         }
-        
+
         .priority-option.selected.medium {
-          border-color: #f39c12;
-          background: #fff5e6;
+          border-color: var(--accent-warning, #f39c12);
+          background: rgba(227, 179, 65, 0.1);
         }
-        
+
         .priority-option.selected.medium i {
-          color: #f39c12;
+          color: var(--accent-warning, #f39c12);
         }
-        
+
         .priority-option.selected.low {
-          border-color: #2ecc71;
-          background: #eafaf1;
+          border-color: var(--accent-success, #2ecc71);
+          background: rgba(86, 211, 100, 0.1);
         }
-        
+
         .priority-option.selected.low i {
-          color: #2ecc71;
+          color: var(--accent-success, #2ecc71);
         }
         
         .form-actions {
@@ -408,22 +411,23 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
         
         .cancel-button {
           padding: 10px 16px;
-          background: #f5f5f5;
+          background: var(--bg-secondary, #f5f5f5);
           border: none;
           border-radius: 6px;
           font-size: 16px;
           cursor: pointer;
           transition: background 0.2s ease;
+          color: var(--text-primary, #333);
         }
-        
+
         .cancel-button:hover {
-          background: #eee;
+          background: var(--bg-tertiary, #eee);
         }
-        
+
         .save-button {
           padding: 10px 24px;
-          background: #6c5ce7;
-          color: white;
+          background: var(--accent-primary, #6c5ce7);
+          color: var(--text-inverse, white);
           border: none;
           border-radius: 6px;
           font-size: 16px;
@@ -431,9 +435,28 @@ export default function WishModal({ isOpen, onClose, onSave, initialCategory, in
           cursor: pointer;
           transition: background 0.2s ease;
         }
-        
+
         .save-button:hover {
-          background: #5b4ecc;
+          background: var(--accent-hover, #5b4ecc);
+        }
+
+        /* 深色主题特殊适配 */
+        :global([data-theme="dark"]) .form-group input:focus,
+        :global([data-theme="dark"]) .form-group textarea:focus {
+          border-color: var(--accent-primary, #58a6ff);
+          box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+        }
+
+        :global([data-theme="dark"]) .category-option:hover:not(.selected) {
+          background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+        }
+
+        :global([data-theme="dark"]) .priority-option:hover:not(.selected) {
+          background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+        }
+
+        :global([data-theme="dark"]) .close-button:hover {
+          color: var(--text-primary, #f0f6fc);
         }
       `}</style>
     </div>

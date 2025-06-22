@@ -1,0 +1,221 @@
+/* 主题变量定义 */
+
+/* 浅色主题 */
+:root[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-card: #ffffff;
+  --bg-overlay: rgba(255, 255, 255, 0.9);
+  --bg-modal: rgba(0, 0, 0, 0.5);
+  
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-tertiary: #888888;
+  --text-muted: #aaaaaa;
+  --text-inverse: #ffffff;
+  
+  --border-primary: #e0e0e0;
+  --border-secondary: #d0d0d0;
+  --border-focus: #0078d4;
+  
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  
+  --accent-primary: #0078d4;
+  --accent-hover: #106ebe;
+  --accent-disabled: #a0a8c0;
+  --accent-secondary: #fd79a8;
+  --accent-danger: #e53935;
+  --accent-success: #4caf50;
+  --accent-warning: #ff9800;
+
+  --bg-error: #ffe0e0;
+  --bg-tooltip: rgba(0, 0, 0, 0.7);
+  --border-error: rgba(229, 57, 53, 0.2);
+}
+
+/* 深色主题 */
+:root[data-theme="dark"] {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --bg-card: #161b22;
+  --bg-overlay: rgba(13, 17, 23, 0.9);
+  --bg-modal: rgba(0, 0, 0, 0.8);
+  
+  --text-primary: #f0f6fc;
+  --text-secondary: #c9d1d9;
+  --text-tertiary: #8b949e;
+  --text-muted: #6e7681;
+  --text-inverse: #0d1117;
+  
+  --border-primary: #30363d;
+  --border-secondary: #21262d;
+  --border-focus: #58a6ff;
+  
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  
+  --accent-primary: #58a6ff;
+  --accent-hover: #4493f8;
+  --accent-disabled: #484f58;
+  --accent-secondary: #ff7eb6;
+  --accent-danger: #f85149;
+  --accent-success: #56d364;
+  --accent-warning: #e3b341;
+
+  --bg-error: rgba(248, 81, 73, 0.1);
+  --bg-tooltip: rgba(13, 17, 23, 0.8);
+  --border-error: rgba(248, 81, 73, 0.3);
+}
+
+/* 主题切换器样式 */
+.theme-switcher {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+}
+
+.theme-switcher:hover {
+  background: var(--bg-tertiary);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* 全局样式应用主题变量 */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 卡片样式 */
+.card, .album-card, .waterfall-item {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.card:hover, .album-card:hover, .waterfall-item:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* 模态框样式 */
+.modal-overlay {
+  background-color: var(--bg-modal);
+}
+
+.modal, .album-detail-modal {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 按钮样式 */
+.btn {
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-primary);
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background-color: var(--accent-secondary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* 输入框样式 */
+input, textarea, select {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--border-focus);
+  background-color: var(--bg-primary);
+}
+
+/* 侧边栏样式 */
+.sidebar {
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-primary);
+}
+
+.menu-item {
+  color: var(--text-secondary);
+}
+
+.menu-item:hover, .menu-item.active {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* 头部样式 */
+.header {
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.page-title {
+  color: var(--text-primary);
+}
+
+/* 加载和错误状态 */
+.loading-container, .error-container, .empty-container {
+  background-color: var(--bg-overlay);
+  color: var(--text-secondary);
+}
+
+/* 深色主题下的特殊调整 */
+[data-theme="dark"] .waterfall-item img {
+  opacity: 0.9;
+}
+
+[data-theme="dark"] .waterfall-item:hover img {
+  opacity: 1;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}

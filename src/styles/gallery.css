@@ -1,0 +1,336 @@
+/* 画廊页面样式 */
+.gallery-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.gallery-title-section {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.back-to-albums-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: 30px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm, 0 3px 10px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  background-color: var(--bg-overlay, rgba(255, 255, 255, 0.9));
+  color: var(--text-secondary, #666);
+  border: 1px solid var(--border-primary, rgba(0, 0, 0, 0.1));
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.back-to-albums-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 5px 15px rgba(0, 0, 0, 0.15));
+  background-color: var(--bg-card, rgba(255, 255, 255, 1));
+  color: var(--text-primary, #333);
+}
+
+
+
+/* 瀑布流容器 */
+.waterfall-container {
+  width: 100%;
+  padding: 0 16px;
+}
+
+/* 瀑布流网格 */
+.waterfall-grid {
+  column-count: 1;
+  column-gap: 16px;
+}
+
+/* 响应式布局 */
+@media (min-width: 576px) {
+  .waterfall-grid {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 768px) {
+  .waterfall-grid {
+    column-count: 3;
+  }
+}
+
+@media (min-width: 992px) {
+  .waterfall-grid {
+    column-count: 4;
+  }
+}
+
+@media (min-width: 1200px) {
+  .waterfall-grid {
+    column-count: 5;
+  }
+}
+
+/* 瀑布流项目 */
+.waterfall-item {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--bg-card);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid var(--border-primary);
+}
+
+.waterfall-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.waterfall-item img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* 视频项目样式 */
+.video-item .video-thumbnail {
+  position: relative;
+}
+
+.video-item .play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+}
+
+/* 媒体信息 */
+.media-info {
+  padding: 12px;
+}
+
+.media-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-info p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.media-info i {
+  margin-right: 6px;
+  color: #888;
+}
+
+.album-name {
+  font-weight: 500;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #666;
+}
+
+.loading-container p {
+  margin-top: 16px;
+}
+
+.loading-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  color: #666;
+}
+
+.loading-more p {
+  margin-top: 8px;
+}
+
+/* 空状态 */
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #aaa;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.empty-container i {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+/* 错误状态 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #d32f2f;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.error-container i {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.retry-btn {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retry-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.no-more-items {
+  text-align: center;
+  padding: 24px 0;
+  color: #aaa;
+}
+
+/* 媒体查看器样式 */
+.media-viewer-overlay {
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 1100;
+}
+
+.media-viewer-container {
+  position: relative;
+  width: 90%;
+  max-width: 1200px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.media-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border: none;
+  cursor: pointer;
+}
+
+.media-close-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.media-viewer-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.media-viewer-video-container {
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 比例 */
+  position: relative;
+}
+
+.media-viewer-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.media-viewer-info {
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 16px;
+  margin-top: 16px;
+  border-radius: 8px;
+}
+
+.media-viewer-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.media-description {
+  margin: 8px 0 16px 0;
+  font-size: 14px;
+  color: #ddd;
+}
+
+.media-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.media-meta i {
+  margin-right: 6px;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .gallery-title-section {
+    justify-content: center;
+  }
+
+  .back-to-albums-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+}

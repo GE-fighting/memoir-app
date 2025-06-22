@@ -240,10 +240,11 @@ export default function Wishlist() {
         .category-tabs {
           display: flex;
           margin-bottom: 24px;
-          background: white;
+          background: var(--bg-card, white);
           border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.05));
+          border: 1px solid var(--border-primary, transparent);
         }
 
         .category-tab {
@@ -256,13 +257,13 @@ export default function Wishlist() {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          color: #666;
+          color: var(--text-secondary, #666);
           transition: all 0.3s ease;
         }
 
         .category-tab.active {
-          background: #6c5ce7;
-          color: white;
+          background: var(--accent-primary, #6c5ce7);
+          color: var(--text-inverse, white);
         }
 
         .category-tab i {
@@ -273,8 +274,8 @@ export default function Wishlist() {
           position: fixed;
           bottom: 30px;
           right: 30px;
-          background: #6c5ce7;
-          color: white;
+          background: var(--accent-primary, #6c5ce7);
+          color: var(--text-inverse, white);
           border: none;
           border-radius: 50%;
           width: 60px;
@@ -284,7 +285,7 @@ export default function Wishlist() {
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+          box-shadow: var(--shadow-lg, 0 4px 12px rgba(108, 92, 231, 0.3));
           transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           z-index: 100;
           transform: translateZ(0);
@@ -302,18 +303,18 @@ export default function Wishlist() {
         }
 
         .fab-button:hover {
-          background: #5b4ecc;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          background: var(--accent-hover, #5b4ecc);
+          box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.3));
           transform: translateY(-2px);
         }
 
         .fab-button:active {
           transform: translateY(0);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
         }
 
         .fab-button:disabled {
-          background: #a29ddb;
+          background: var(--accent-disabled, #a29ddb);
           cursor: not-allowed;
           box-shadow: none;
           transform: none;
@@ -330,8 +331,8 @@ export default function Wishlist() {
         .fab-tooltip {
           position: absolute;
           right: 70px;
-          background: rgba(0, 0, 0, 0.7);
-          color: white;
+          background: var(--bg-tooltip, rgba(0, 0, 0, 0.7));
+          color: var(--text-inverse, white);
           padding: 5px 12px;
           border-radius: 4px;
           font-size: 14px;
@@ -353,20 +354,21 @@ export default function Wishlist() {
           right: -6px;
           top: 50%;
           transform: translateY(-50%);
-          border-left: 6px solid rgba(0, 0, 0, 0.7);
+          border-left: 6px solid var(--bg-tooltip, rgba(0, 0, 0, 0.7));
           border-top: 6px solid transparent;
           border-bottom: 6px solid transparent;
         }
 
         .error-message {
-          background: #ffe0e0;
-          color: #d63031;
+          background: var(--bg-error, #ffe0e0);
+          color: var(--accent-danger, #d63031);
           padding: 12px;
           border-radius: 8px;
           margin-bottom: 16px;
           display: flex;
           align-items: center;
           gap: 8px;
+          border: 1px solid var(--border-error, rgba(214, 48, 49, 0.2));
         }
 
         .loading-state,
@@ -376,7 +378,7 @@ export default function Wishlist() {
           align-items: center;
           justify-content: center;
           padding: 48px 0;
-          color: #adb5bd;
+          color: var(--text-muted, #adb5bd);
           text-align: center;
         }
 
@@ -384,7 +386,7 @@ export default function Wishlist() {
         .empty-state i {
           font-size: 48px;
           margin-bottom: 16px;
-          color: #e9ecef;
+          color: var(--text-muted, #e9ecef);
         }
 
         .wish-list {
@@ -398,43 +400,44 @@ export default function Wishlist() {
           align-items: flex-start;
           padding: 16px;
           padding-left: 20px;
-          background: white;
+          background: var(--bg-card, white);
           border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.05));
           transition: all 0.3s ease;
           position: relative;
           overflow: hidden;
           border-left-width: 6px;
           border-left-style: solid;
+          border: 1px solid var(--border-primary, transparent);
         }
 
         .wish-item.completed {
-          background: #f8f9fa;
-          border-left-color: #adb5bd !important;
+          background: var(--bg-secondary, #f8f9fa);
+          border-left-color: var(--text-muted, #adb5bd) !important;
         }
 
         .wish-item.priority-high {
-          border-left-color: #e74c3c;
+          border-left-color: var(--accent-danger, #e74c3c);
         }
 
         .wish-item.priority-medium {
-          border-left-color: #f39c12;
+          border-left-color: var(--accent-warning, #f39c12);
         }
 
         .wish-item.priority-low {
-          border-left-color: #2ecc71;
+          border-left-color: var(--accent-success, #2ecc71);
         }
 
         .wish-item.completed .wish-title,
         .wish-item.completed .wish-description {
           text-decoration: line-through;
-          color: #adb5bd;
+          color: var(--text-muted, #adb5bd);
         }
 
         .wish-checkbox {
           width: 24px;
           height: 24px;
-          border: 2px solid #6c5ce7;
+          border: 2px solid var(--accent-primary, #6c5ce7);
           border-radius: 50%;
           margin-right: 16px;
           cursor: pointer;
@@ -442,13 +445,13 @@ export default function Wishlist() {
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          color: white;
+          color: var(--text-inverse, white);
           background: transparent;
           transition: all 0.2s ease;
         }
 
         .wish-item.completed .wish-checkbox {
-          background: #6c5ce7;
+          background: var(--accent-primary, #6c5ce7);
         }
 
         .wish-content {
@@ -459,7 +462,7 @@ export default function Wishlist() {
           font-size: 18px;
           font-weight: 500;
           margin: 0 0 8px 0;
-          color: #333;
+          color: var(--text-primary, #333);
           display: flex;
           align-items: center;
           flex-wrap: wrap;
@@ -474,24 +477,24 @@ export default function Wishlist() {
           font-weight: normal;
           padding: 2px 8px;
           border-radius: 12px;
-          color: white;
+          color: var(--text-inverse, white);
         }
 
         .priority-badge.priority-high {
-          background-color: #e74c3c;
+          background-color: var(--accent-danger, #e74c3c);
         }
 
         .priority-badge.priority-medium {
-          background-color: #f39c12;
+          background-color: var(--accent-warning, #f39c12);
         }
 
         .priority-badge.priority-low {
-          background-color: #2ecc71;
+          background-color: var(--accent-success, #2ecc71);
         }
 
         .wish-description {
           font-size: 14px;
-          color: #666;
+          color: var(--text-secondary, #666);
           margin: 0 0 12px 0;
           line-height: 1.5;
         }
@@ -501,7 +504,7 @@ export default function Wishlist() {
           align-items: center;
           gap: 6px;
           font-size: 14px;
-          color: #888;
+          color: var(--text-tertiary, #888);
           margin-bottom: 4px;
         }
 
@@ -521,23 +524,49 @@ export default function Wishlist() {
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
-          color: #ccc;
+          color: var(--text-muted, #ccc);
         }
 
         .wish-edit:hover {
-          color: #6c5ce7;
-          background: #f5f3ff;
+          color: var(--accent-primary, #6c5ce7);
+          background: var(--bg-tertiary, #f5f3ff);
         }
 
         .wish-delete:hover {
-          color: #ff6b6b;
-          background: #fff0f0;
+          color: var(--accent-danger, #ff6b6b);
+          background: var(--bg-error, #fff0f0);
         }
 
         .wish-edit:disabled,
         .wish-delete:disabled {
-          color: #e9ecef;
+          color: var(--text-muted, #e9ecef);
           cursor: not-allowed;
+        }
+
+        /* 深色主题特殊适配 */
+        :global([data-theme="dark"]) .category-tab:hover:not(.active) {
+          background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+        }
+
+        :global([data-theme="dark"]) .wish-item:hover {
+          box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.3));
+        }
+
+        :global([data-theme="dark"]) .fab-button {
+          box-shadow: var(--shadow-lg, 0 4px 12px rgba(108, 92, 231, 0.4));
+        }
+
+        :global([data-theme="dark"]) .error-message {
+          background: rgba(248, 81, 73, 0.1);
+          border-color: rgba(248, 81, 73, 0.3);
+        }
+
+        :global([data-theme="dark"]) .wish-edit:hover {
+          background: rgba(108, 92, 231, 0.1);
+        }
+
+        :global([data-theme="dark"]) .wish-delete:hover {
+          background: rgba(248, 81, 73, 0.1);
         }
       `}</style>
     </div>

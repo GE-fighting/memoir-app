@@ -8,7 +8,7 @@ module.exports = {
       // instances: 'max' - 使用所有可用CPU核心 (会创建与CPU核心数相同的实例)
       // instances: 4 - 固定数量的实例 (适合大多数生产环境)
       // instances: 'max-1' - 使用CPU核心数减1 (为系统预留一个核心)
-      instances: 2, // 使用单个实例，降低资源消耗
+      instances: 1, // 使用单个实例，降低资源消耗
       exec_mode: 'cluster', // 集群模式，实现负载均衡
       watch: false, // 生产环境不启用监视
       max_memory_restart: '1G', // 内存使用超过1GB时自动重启
