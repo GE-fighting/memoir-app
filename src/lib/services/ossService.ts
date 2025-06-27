@@ -3,6 +3,25 @@ import { apiClient } from '@/services/api-client';
 import { getPersonalSTSToken } from './stsTokenCache';
 
 /**
+ * 全局OSS配置选项
+ */
+export const OSSConfig = {
+  /**
+   * 是否启用CORS验证
+   * 如果设置为false，则不会执行CORS验证
+   * 当已知OSS配置正确且能正常上传大文件时，可以禁用此选项
+   */
+  enableCORSValidation: false,
+  
+  /**
+   * 是否启用详细日志记录
+   * 如果设置为true，将记录详细的上传过程和返回结果
+   * 生产环境建议设置为false
+   */
+  enableDebugLogging: true
+};
+
+/**
  * Upload file to OSS with progress tracking
  */
 export async function uploadFileToOSS(
@@ -17,34 +36,130 @@ export async function uploadFileToOSS(
       'Cache-Control': 'max-age=31536000',
     };
     
-    // 使用简单上传方法替代分片上传
-    // 注意：简单上传方法不支持进度回调，如果需要进度回调，仍需使用multipartUpload
-    // 如果需要进度回调，可以模拟进度或保留使用multipartUpload
-    if (onProgress) {
-      // 模拟上传开始
-      onProgress(0);
+    // 文件大小阈值，超过此值使用分片上传（50MB）
+    const MULTIPART_THRESHOLD = 10 * 1024 * 1024;
+    
+    // 如果文件较小，使用简单上传
+    if (file.size < MULTIPART_THRESHOLD) {
+      if (onProgress) {
+        // 模拟上传开始
+        onProgress(0);
+      }
+      
+      const result = await client.put(objectKey, file, {
+        headers,
+        timeout: 120000 // 增加超时时间到120秒
+      });
+      
+      if (onProgress) {
+        // 模拟上传完成
+        onProgress(100);
+      }
+      
+      // 返回上传后的URL
+      let url = result.url;
+      if (OSSConfig.enableDebugLogging) {
+        console.log('简单上传的result', result);
+        console.log('上传后的url为', url);
+      }
+      if (!url) {
+        // 使用类型断言访问client.options
+        const ossOptions = (client as any).options;
+        url = `https://${ossOptions.bucket}.${ossOptions.endpoint}/${objectKey}`;
+      }
+      return url;
+    } 
+    // 大文件使用分片上传
+    else {
+      // 分片大小，1MB
+      const partSize = 1 * 1024 * 1024;
+      
+      try {
+        const result = await client.multipartUpload(objectKey, file, {
+          parallel: 5, // 并行上传分片数
+          partSize, // 分片大小
+          timeout: 120000, // 超时时间
+          headers,
+          progress: (p) => {
+            if (onProgress) {
+              // 转换为百分比并四舍五入到整数
+              const percent = Math.round(p * 100);
+              onProgress(percent);
+            }
+          }
+        });
+
+        // 记录更详细的日志以便调试
+        if (OSSConfig.enableDebugLogging) {
+          console.log('分片上传的result', result);
+          if (result.res) {
+            console.log('分片上传的result.res', result.res);
+          }
+        }
+        
+        // 更健壮地获取上传后的URL
+        let url = '';
+        
+        // 尝试从requestUrls获取URL
+        try {
+          const requestUrls = result.res && (result.res as any).requestUrls;
+          if (requestUrls && Array.isArray(requestUrls) && requestUrls.length > 0) {
+            url = requestUrls[0];
+          }
+        } catch (err) {
+          console.warn('从requestUrls获取URL失败:', err);
+        }
+        
+        // 尝试从result.url获取
+        if (!url && (result as any).url) {
+          url = (result as any).url;
+        }
+        
+        // 如果上述方法都失败，或URL包含uploadId参数，则构造一个干净的URL
+        if (!url || url.includes('?uploadId=')) {
+          // 使用类型断言访问client.options
+          const ossOptions = (client as any).options;
+          console.log('ossOptions', ossOptions);
+          if (ossOptions && ossOptions.bucket && ossOptions.endpoint) {
+            url = `https://${ossOptions.bucket}.${ossOptions.endpoint.host}/${objectKey}`;
+          } else {
+            console.warn('无法从client.options获取bucket或endpoint');
+            // 最后的后备方案 - 尝试从结果中提取路径构造URL
+            if (result.name) {
+              const bucket = (client as any).options?.bucket || 'unknown-bucket';
+              const endpoint = (client as any).options?.endpoint?.host || 'oss-cn-nanjing.aliyuncs.com';
+              url = `https://${bucket}.${endpoint}/${result.name}`;
+            } else {
+              console.error('无法构建有效的URL');
+              throw new Error('无法获取有效的文件URL');
+            }
+          }
+        }
+        return url;
+      } catch (err) {
+        // 检查是否是ETag相关错误
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        
+        if (errorMessage.includes('etag of expose-headers') || 
+            errorMessage.includes('ETag') || 
+            errorMessage.includes('Failed to upload some parts')) {
+          console.error('分片上传错误，可能是OSS的CORS配置问题:', errorMessage);
+          
+          // 抛出更友好的错误信息，包含解决方案链接
+          throw new Error(
+            `上传失败：OSS的CORS配置需要包含ETag在expose-headers中。\n` +
+            `请参考文档：docs/oss-cors-config.md 或 https://help.aliyun.com/document_detail/32069.html\n` +
+            `原始错误: ${errorMessage}`
+          );
+        }
+        
+        // 重新抛出其他错误
+        throw err;
+      }
     }
-    
-    const result = await client.put(objectKey, file, {
-      headers
-    });
-    
-    if (onProgress) {
-      // 模拟上传完成
-      onProgress(100);
-    }
-    
-    // 返回上传后的URL
-    // 确保URL使用HTTPS协议
-    let url = result.url;
-    if (url && url.startsWith('http:')) {
-      url = url.replace('http:', 'https:');
-    }
-    
-    return url;
-  } catch (error) {
-    console.error('Error uploading file to OSS:', error);
-    throw error;
+  } catch (err) {
+    console.error('上传文件到OSS失败:', err);
+    throw err;
   }
 }
 
@@ -138,6 +253,7 @@ export const getOSSClient = async (): Promise<OSS> => {
       stsToken: stsToken.securityToken,
       secure: true,
       bucket: stsToken.bucket,
+      timeout: 120000, // 增加默认超时时间到120秒
       refreshSTSToken: async () => {
         // 当令牌需要刷新时，使用缓存服务获取新令牌
         const refreshToken = await getPersonalSTSToken();
@@ -220,14 +336,8 @@ export const uploadFile = async (file: File): Promise<UploadResult> => {
     console.log(`开始上传文件到路径: ${objectPath}`);
     
     try {
-      // 上传文件（使用浏览器中的File对象）
-      const result = await client.put(objectPath, file);
-      
-      // 确保URL使用HTTPS协议
-      let url = result.url;
-      if (url && url.startsWith('http:')) {
-        url = url.replace('http:', 'https:');
-      }
+      // 使用改进的上传函数，支持大文件分片上传
+      const url = await uploadFileToOSS(client, file, objectPath);
       
       console.log(`文件上传成功，URL: ${url}`);
       
@@ -369,7 +479,20 @@ export const getFilesByCategory = async (): Promise<FileListItem[]> => {
 export const deleteFile = async (fileUrl: string): Promise<void> => {
   try {
     const client = await getOSSClient();
-    const objectName = new URL(fileUrl).pathname.substring(1); // 移除开头的斜杠
+    let objectName: string;
+    
+    try {
+      objectName = new URL(fileUrl).pathname.substring(1); // 移除开头的斜杠
+    } catch (error) {
+      console.error('无效的URL格式:', fileUrl, error);
+      // 使用简单的字符串处理作为后备方案
+      // 移除协议部分
+      const withoutProtocol = fileUrl.replace(/^https?:\/\/[^\/]+\//, '');
+      // 移除查询参数
+      objectName = withoutProtocol.split('?')[0];
+      console.log('后备处理后的objectName:', objectName);
+    }
+    
     await client.delete(objectName);
   } catch (error) {
     console.error("删除文件失败:", error);
@@ -391,7 +514,17 @@ export const getSignedUrl = async (objectUrl: string, expires: number = 3600): P
     // 检查是否为完整URL或仅为对象路径
     if (objectUrl.startsWith('http')) {
       // 从URL中提取对象名称
-      objectName = new URL(objectUrl).pathname.substring(1); // 移除开头的斜杠
+      try {
+        objectName = new URL(objectUrl).pathname.substring(1); // 移除开头的斜杠
+      } catch (error) {
+        console.error('无效的URL格式:', objectUrl, error);
+        // 使用简单的字符串处理作为后备方案
+        // 移除协议部分
+        const withoutProtocol = objectUrl.replace(/^https?:\/\/[^\/]+\//, '');
+        // 移除查询参数
+        objectName = withoutProtocol.split('?')[0];
+        console.log('后备处理后的objectName:', objectName);
+      }
     } else {
       // 直接使用作为对象路径
       objectName = objectUrl;

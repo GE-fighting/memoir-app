@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import OSS from 'ali-oss';
 import { CreateCoupleMediaWithURLParams, coupleMediaService } from '@/services/couple-media-service';
-import { uploadFileToOSS, getMediaThumbnail } from '@/lib/services/ossService';
+import { uploadFileToOSS, getMediaThumbnail, OSSConfig } from '@/lib/services/ossService';
 import { MediaType } from '@/services/api-types';
+import { validateOSSConfig } from '@/lib/services/ossConfigValidator';
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error' | 'cancelled';
 
@@ -63,6 +64,20 @@ export const useAlbumUpload = (albumId: string) => {
       });
       
       ossClient.current = client;
+      
+      // 验证OSS配置
+      if (OSSConfig.enableCORSValidation) {
+        try {
+          const validationResult = await validateOSSConfig(client);
+          if (!validationResult.success) {
+            console.warn('OSS配置可能存在问题，可能影响上传功能:', validationResult.issues);
+          }
+        } catch (validationError) {
+          console.error('验证OSS配置时出错:', validationError);
+          // 继续使用客户端，不中断流程
+        }
+      }
+      
       return client;
     } catch (error) {
       console.error('初始化OSS客户端失败:', error);
@@ -98,12 +113,13 @@ export const useAlbumUpload = (albumId: string) => {
       // 生成对象键
       const objectKey = generateObjectKey(file);
       
-      // 更新进度
+      // 更新进度的回调函数
       const updateProgress = (p: number) => {
         setProgress(prev => ({ ...prev, [fileId]: p }));
       };
       
-      // 上传文件
+      // 使用改进的uploadFileToOSS函数上传文件
+      // 它会根据文件大小自动选择简单上传或分片上传
       const url = await uploadFileToOSS(client, file, objectKey, updateProgress);
       
       // 判断媒体类型
@@ -166,6 +182,8 @@ export const useAlbumUpload = (albumId: string) => {
         try {
           // 上传文件到OSS
           const uploadResult = await uploadFile(file, fileId);
+          
+          console.log('uploadResult', uploadResult);
           
           // 保存媒体信息到相册
           const isImage = file.type.startsWith('image/');

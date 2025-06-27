@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { uploadFile as ossUploadFile } from '../services/ossService';
+import { uploadFile as ossUploadFile, uploadFileToOSS, getOSSClient, OSSConfig } from '../services/ossService';
+import { validateOSSConfig } from '../services/ossConfigValidator';
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error' | 'cancelled';
 
@@ -7,10 +8,9 @@ interface UploadProgress {
   [fileId: string]: number;
 }
 
-export interface UploadError {
-  fileId?: string;
-  fileName?: string;
+interface UploadError {
   message: string;
+  fileName?: string;
 }
 
 export const useOSSUpload = () => {
@@ -33,28 +33,55 @@ export const useOSSUpload = () => {
       const fileId = Math.random().toString(36).substring(2, 9);
       setProgress(prev => ({ ...prev, [fileId]: 0 }));
       
-      // 模拟进度更新（实际OSS SDK可能不直接提供进度回调）
-      const updateInterval = setInterval(() => {
-        setProgress(prev => {
-          const currentProgress = prev[fileId] || 0;
-          if (currentProgress < 95) {
-            return { ...prev, [fileId]: currentProgress + 5 };
-          }
-          return prev;
-        });
-      }, 200);
+      // 获取OSS客户端
+      const client = await getOSSClient();
       
-      try {
-        const result = await ossUploadFile(file);
-        clearInterval(updateInterval);
-        
-        // 设置为完成
-        setProgress(prev => ({ ...prev, [fileId]: 100 }));
-        return result;
-      } catch (err) {
-        clearInterval(updateInterval);
-        throw err;
+      // 验证OSS配置（如果启用）
+      if (OSSConfig.enableCORSValidation) {
+        try {
+          const validationResult = await validateOSSConfig(client);
+          if (!validationResult.success) {
+            console.warn('OSS配置可能存在问题，可能影响上传功能:', validationResult.issues);
+          }
+        } catch (validationError) {
+          console.error('验证OSS配置时出错:', validationError);
+          // 继续使用客户端，不中断流程
+        }
       }
+      
+      // 生成对象键（路径）
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 8);
+      const fileExtension = file.name.split('.').pop() || '';
+      const userId = typeof localStorage !== 'undefined' ? localStorage.getItem('userId') || 'default' : 'default';
+      
+      // 添加年/月/日的路径结构
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      
+      const objectKey = `${userId}/${year}/${month}/${day}/${timestamp}-${randomString}.${fileExtension}`;
+      
+      // 更新进度的回调函数
+      const updateProgress = (p: number) => {
+        setProgress(prev => ({ ...prev, [fileId]: p }));
+      };
+      
+      // 使用改进的uploadFileToOSS函数上传文件
+      const url = await uploadFileToOSS(client, file, objectKey, updateProgress);
+      
+      // 设置为完成
+      setProgress(prev => ({ ...prev, [fileId]: 100 }));
+      setStatus('success');
+      
+      return {
+        url,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        category: ''
+      };
     } catch (err) {
       setStatus('error');
       setError({
@@ -72,79 +99,38 @@ export const useOSSUpload = () => {
       setStatus('uploading');
       abortController.current = new AbortController();
       
-      const fileMap: { [id: string]: File } = {};
-      
-      // 为每个文件创建ID并初始化进度
-      files.forEach(file => {
-        const id = Math.random().toString(36).substring(2, 9);
-        fileMap[id] = file;
-        setProgress(prev => ({ ...prev, [id]: 0 }));
-      });
-      
       const results = [];
-      const fileIds = Object.keys(fileMap);
       
-      for (let i = 0; i < fileIds.length; i++) {
-        const fileId = fileIds[i];
-        const file = fileMap[fileId];
-        
+      for (const file of files) {
         if (abortController.current.signal.aborted) {
           throw new Error('上传已取消');
         }
         
         try {
-          // 模拟进度更新
-          const updateInterval = setInterval(() => {
-            if (!abortController.current.signal.aborted) {
-              setProgress(prev => {
-                const currentProgress = prev[fileId] || 0;
-                if (currentProgress < 95) {
-                  return { ...prev, [fileId]: currentProgress + 5 };
-                }
-                return prev;
-              });
-            }
-          }, 200);
-          
-          const result = await ossUploadFile(file);
-          clearInterval(updateInterval);
-          
-          // 设置为完成
-          setProgress(prev => ({ ...prev, [fileId]: 100 }));
+          const result = await uploadFile(file);
           results.push(result);
         } catch (error) {
-          if (abortController.current.signal.aborted) {
-            break;
-          }
-          
-          console.error(`文件上传失败: ${file.name}`, error);
-          setError({
-            fileId,
-            fileName: file.name,
-            message: error instanceof Error ? error.message : '上传失败'
-          });
-          
+          console.error(`文件 ${file.name} 上传失败:`, error);
           // 继续上传其他文件
         }
       }
       
-      if (results.length === files.length) {
+      if (results.length > 0) {
         setStatus('success');
-      } else if (results.length > 0) {
-        setStatus('success'); // 部分成功也算成功
       } else {
         setStatus('error');
+        setError({ message: '所有文件上传失败' });
       }
       
       return results;
-    } catch (err) {
+    } catch (error) {
       setStatus('error');
       setError({
-        message: err instanceof Error ? err.message : '上传失败'
+        message: error instanceof Error ? error.message : '上传失败'
       });
-      throw err;
+      throw error;
     }
-  }, [resetState]);
+  }, [uploadFile, resetState]);
   
   // 取消上传
   const cancelUpload = useCallback(() => {
@@ -156,9 +142,9 @@ export const useOSSUpload = () => {
     uploadFile,
     uploadFiles,
     cancelUpload,
-    resetState,
     status,
     progress,
-    error
+    error,
+    resetState
   };
 }; 

@@ -60,11 +60,22 @@ export const getCoupleSignedUrl = async (objectUrl: string, expires: number = 36
     // 检查是否为完整URL或仅为对象路径
     if (objectUrl.startsWith('http')) {
       // 从URL中提取对象名称
-      objectName = new URL(objectUrl).pathname.substring(1); // 移除开头的斜杠
+      console.log('objectUrl', objectUrl);
+      try {
+        objectName = new URL(objectUrl).pathname.substring(1); // 移除开头的斜杠
+      } catch (error) {
+        // 使用简单的字符串处理作为后备方案
+        // 移除协议部分
+        const withoutProtocol = objectUrl.replace(/^https?:\/\/[^\/]+\//, '');
+        // 移除查询参数
+        objectName = withoutProtocol.split('?')[0];
+        console.log('后备处理后的objectName:', objectName);
+      }
     } else {
       // 直接使用作为对象路径
       objectName = objectUrl;
     }
+    console.log('objectName', objectName);
     
     // 检查是否有处理参数
     if (objectUrl.includes('x-oss-process=')) {
