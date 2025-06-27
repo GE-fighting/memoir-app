@@ -9,6 +9,9 @@ import LoadingSpinner from './ui/loading-spinner';
 import { useNotification } from './ui/notification';
 import '../styles/gallery.css';
 
+// 调试模式开关，设置为true时显示调试日志
+const DEBUG_MODE = false;
+
 interface MediaItem {
   id: string;
   title?: string;
@@ -33,6 +36,7 @@ export default function Gallery() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentMedia, setCurrentMedia] = useState<MediaItem | null>(null);
   const [isMediaViewerOpen, setIsMediaViewerOpen] = useState(false);
+  const [totalItems, setTotalItems] = useState(0); // 跟踪总项目数
   const videoRef = useRef<HTMLVideoElement>(null);
   const { showNotification, NotificationComponent } = useNotification();
   
@@ -44,12 +48,19 @@ export default function Gallery() {
     
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
+        DEBUG_MODE && console.log('Last item is intersecting! Loading more items...');
         loadMoreMedia();
       }
+    }, {
+      rootMargin: '200px', // 增加提前触发的距离，确保移动设备上有足够的预加载空间
+      threshold: 0.1, // 只需要很小一部分进入视口就触发
     });
     
-    if (node) observer.current.observe(node);
-  }, [loadingMore, hasMore]);
+    if (node) {
+      DEBUG_MODE && console.log('Observer attached to last item');
+      observer.current.observe(node);
+    }
+  }, [loadingMore, hasMore, page]);
   
   // 加载媒体数据
   const loadMedia = async (pageNum: number, refresh: boolean = false) => {
@@ -62,13 +73,29 @@ export default function Gallery() {
       
       setError('');
       
-      // 这里调用API获取所有相册的媒体文件
+      // 这里调用API获取所有相册的媒体文件，传入正确的分页参数
       const coupleId = localStorage.getItem('coupleID') || '';
-      const response = await albumService.getAllMedia(coupleId); // 每页20项
+      DEBUG_MODE && console.log(`Loading media page ${pageNum} for coupleId: ${coupleId}`);
       
-      // 处理返回的数据 
+      if (!coupleId) {
+        throw new Error('No couple ID found');
+      }
+      
+      const response = await albumService.getAllMedia(coupleId, pageNum, 20); // 明确传入页码和每页数量
+      
+      // 验证API响应格式
+      if (!response || !Array.isArray(response.data)) {
+        console.error('Invalid API response format:', response);
+        throw new Error('Invalid API response format');
+      }
+      
+      // 处理返回的数据
       const items = response.data;
       const has_more = response.page < response.total_pages;
+      DEBUG_MODE && console.log(`Loaded page ${response.page} of ${response.total_pages}, hasMore: ${has_more}, items count: ${items.length}`);
+      
+      // 设置总项目数
+      setTotalItems(response.total);
       
       // 处理媒体URL，为每个媒体生成签名URL
       const mediaWithSignedUrls = await Promise.all(
@@ -95,8 +122,8 @@ export default function Gallery() {
             console.error('处理媒体URL失败:', err);
             return {
               ...item,
-              url: '', // 失败时使用空URL
-              thumbnail_url: ''
+              url: item.media_url || '', // 如果签名失败，使用原始URL
+              thumbnail_url: item.thumbnail_url || ''
             };
           }
         })
@@ -105,7 +132,10 @@ export default function Gallery() {
       // 过滤掉URL为空的项
       const validMedia = mediaWithSignedUrls.filter(item => item.url);
       
-      if (refresh || pageNum === 1) {
+      if (validMedia.length === 0 && pageNum === 1) {
+        // 如果第一页没有有效数据，显示空状态
+        setMediaItems([]);
+      } else if (refresh || pageNum === 1) {
         setMediaItems(validMedia);
       } else {
         setMediaItems(prev => [...prev, ...validMedia]);
@@ -115,6 +145,12 @@ export default function Gallery() {
       setPage(pageNum);
     } catch (err) {
       console.error('Failed to load media:', err);
+      
+      // 如果是加载更多失败，保持现有数据，只显示错误通知
+      if (pageNum > 1) {
+        setHasMore(false); // 防止继续尝试无限滚动
+      }
+      
       setError(
         language === 'zh' 
           ? '加载媒体文件失败，请刷新页面重试' 
@@ -126,7 +162,7 @@ export default function Gallery() {
         type: 'error',
         duration: 5000,
         actionText: language === 'zh' ? '重试' : 'Retry',
-        onAction: () => loadMedia(1, true)
+        onAction: () => loadMedia(pageNum, pageNum === 1)
       });
     } finally {
       setIsLoading(false);
@@ -137,6 +173,7 @@ export default function Gallery() {
   // 加载更多媒体
   const loadMoreMedia = () => {
     if (!loadingMore && hasMore) {
+      DEBUG_MODE && console.log(`Loading more media. Current page: ${page}, hasMore: ${hasMore}`);
       loadMedia(page + 1);
     }
   };
@@ -201,6 +238,16 @@ export default function Gallery() {
             <i className="fas fa-images"></i>
             {language === 'zh' ? '相册墙' : 'Albums'}
           </button>
+          
+          {mediaItems.length > 0 && totalItems > 0 && (
+            <div className="gallery-info">
+              <span>
+                {language === 'zh' 
+                  ? `已加载 ${mediaItems.length} / ${totalItems} 个媒体` 
+                  : `Loaded ${mediaItems.length} / ${totalItems} media`}
+              </span>
+            </div>
+          )}
         </div>
       </div>
       
@@ -233,14 +280,10 @@ export default function Gallery() {
         <div className="waterfall-container">
           <div className="waterfall-grid">
             {mediaItems.map((item, index) => {
-              // 为最后一个元素添加ref，用于无限滚动
-              const isLastItem = index === mediaItems.length - 1;
-              
               return (
                 <div 
                   className={`waterfall-item ${item.media_type === 'video' ? 'video-item' : ''}`}
                   key={item.id}
-                  ref={isLastItem ? lastItemRef : null}
                   onClick={() => handleMediaClick(item)}
                 >
                   {item.media_type === 'photo' ? (
@@ -270,6 +313,30 @@ export default function Gallery() {
             <div className="loading-more">
               <LoadingSpinner size="md" />
               <p>{language === 'zh' ? '加载更多...' : 'Loading more...'}</p>
+            </div>
+          )}
+          
+          {/* 额外添加一个用于触发无限滚动的占位元素 */}
+          {hasMore && !loadingMore && mediaItems.length > 0 && (
+            <div 
+              ref={lastItemRef}
+              className="scroll-trigger"
+              style={{ 
+                height: '40px', 
+                margin: '10px auto 20px', 
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: 0.6,
+                transition: 'opacity 0.3s ease'
+              }}
+            >
+              <div className="scroll-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           )}
           
