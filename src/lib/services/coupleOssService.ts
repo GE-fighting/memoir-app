@@ -60,7 +60,6 @@ export const getCoupleSignedUrl = async (objectUrl: string, expires: number = 36
     // 检查是否为完整URL或仅为对象路径
     if (objectUrl.startsWith('http')) {
       // 从URL中提取对象名称
-      console.log('objectUrl', objectUrl);
       try {
         objectName = new URL(objectUrl).pathname.substring(1); // 移除开头的斜杠
       } catch (error) {
@@ -69,7 +68,6 @@ export const getCoupleSignedUrl = async (objectUrl: string, expires: number = 36
         const withoutProtocol = objectUrl.replace(/^https?:\/\/[^\/]+\//, '');
         // 移除查询参数
         objectName = withoutProtocol.split('?')[0];
-        console.log('后备处理后的objectName:', objectName);
       }
     } else {
       // 直接使用作为对象路径

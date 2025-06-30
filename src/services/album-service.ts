@@ -180,9 +180,10 @@ class AlbumService {
    * @param pageSize 每页数量
    * @returns 媒体列表响应
    */
-  async getAllMedia(coupleId: string, page: number = 1, pageSize: number = 20): Promise<PaginatedResponse<CoupleMedia>> {
+  async getAllMedia(coupleId: string, media_type: string, page: number = 1, pageSize: number = 20): Promise<PaginatedResponse<CoupleMedia>> {
     const params = {  
       couple_id: coupleId,
+      media_type,
       page,
       page_size: pageSize,
     };

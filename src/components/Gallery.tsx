@@ -26,6 +26,7 @@ interface MediaItem {
 }
 
 export default function Gallery() {
+  
   const { language } = useLanguage();
   const router = useRouter();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
@@ -39,28 +40,69 @@ export default function Gallery() {
   const [totalItems, setTotalItems] = useState(0); // 跟踪总项目数
   const videoRef = useRef<HTMLVideoElement>(null);
   const { showNotification, NotificationComponent } = useNotification();
+
+  console.log('📊 Current Gallery state:', {
+    mediaItemsLength: mediaItems.length,
+    page,
+    hasMore,
+    loadingMore,
+    isLoading,
+    totalItems
+  });
   
+  // 加载更多媒体
+  const loadMoreMedia = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      DEBUG_MODE && console.log(`Loading more media. Current page: ${page}, hasMore: ${hasMore}`);
+      loadMedia(page + 1);
+    }
+  }, [loadingMore, hasMore, page]);
+
   // 观察器用于无限滚动
   const observer = useRef<IntersectionObserver | null>(null);
   const lastItemRef = useCallback((node: HTMLDivElement | null) => {
-    if (loadingMore) return;
-    if (observer.current) observer.current.disconnect();
-    
+    DEBUG_MODE && console.log('lastItemRef callback called', {
+      node: !!node,
+      loadingMore,
+      hasMore,
+      page,
+      mediaItemsLength: mediaItems.length
+    });
+
+    if (loadingMore) {
+      DEBUG_MODE && console.log('Skipping observer setup - currently loading more');
+      return;
+    }
+
+    if (observer.current) {
+      DEBUG_MODE && console.log('Disconnecting previous observer');
+      observer.current.disconnect();
+    }
+
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        DEBUG_MODE && console.log('Last item is intersecting! Loading more items...');
+      DEBUG_MODE && console.log('IntersectionObserver callback triggered', {
+        isIntersecting: entries[0].isIntersecting,
+        hasMore,
+        loadingMore,
+        page
+      });
+
+      if (entries[0].isIntersecting && hasMore && !loadingMore) {
+        DEBUG_MODE && console.log('🚀 Last item is intersecting! Loading more items...');
         loadMoreMedia();
       }
     }, {
       rootMargin: '200px', // 增加提前触发的距离，确保移动设备上有足够的预加载空间
       threshold: 0.1, // 只需要很小一部分进入视口就触发
     });
-    
+
     if (node) {
-      DEBUG_MODE && console.log('Observer attached to last item');
+      DEBUG_MODE && console.log('✅ Observer attached to last item', { hasMore, page });
       observer.current.observe(node);
+    } else {
+      DEBUG_MODE && console.log('❌ No node to observe');
     }
-  }, [loadingMore, hasMore, page]);
+  }, [loadingMore, hasMore, loadMoreMedia, page, mediaItems.length]);
   
   // 加载媒体数据
   const loadMedia = async (pageNum: number, refresh: boolean = false) => {
@@ -81,19 +123,42 @@ export default function Gallery() {
         throw new Error('No couple ID found');
       }
       
-      const response = await albumService.getAllMedia(coupleId, pageNum, 20); // 明确传入页码和每页数量
-      
+      const response = await albumService.getAllMedia(coupleId, 'photo', pageNum, 10); // 每页10个，便于测试分页
+
+      DEBUG_MODE && console.log('📡 API Response received:', response);
+
       // 验证API响应格式
       if (!response || !Array.isArray(response.data)) {
-        console.error('Invalid API response format:', response);
+        console.error('❌ Invalid API response format:', response);
         throw new Error('Invalid API response format');
       }
-      
+
       // 处理返回的数据
       const items = response.data;
-      const has_more = response.page < response.total_pages;
-      DEBUG_MODE && console.log(`Loaded page ${response.page} of ${response.total_pages}, hasMore: ${has_more}, items count: ${items.length}`);
-      
+
+      // 修正 hasMore 的计算逻辑
+      // 方法1: 基于页码比较
+      const has_more_by_page = response.page < response.total_pages;
+
+      // 方法2: 基于已加载数量与总数量比较
+      const currentLoadedCount = pageNum === 1 ? items.length : mediaItems.length + items.length;
+      const has_more_by_count = currentLoadedCount < response.total;
+
+      // 使用更可靠的方法
+      const has_more = has_more_by_count;
+
+      DEBUG_MODE && console.log(`📄 Loaded page ${response.page} of ${response.total_pages}, hasMore: ${has_more}, items count: ${items.length}`);
+      DEBUG_MODE && console.log('📊 Pagination info:', {
+        currentPage: response.page,
+        totalPages: response.total_pages,
+        totalItems: response.total,
+        itemsThisPage: items.length,
+        currentLoadedCount,
+        hasMoreByPage: has_more_by_page,
+        hasMoreByCount: has_more_by_count,
+        finalHasMore: has_more
+      });
+
       // 设置总项目数
       setTotalItems(response.total);
       
@@ -138,7 +203,13 @@ export default function Gallery() {
       } else if (refresh || pageNum === 1) {
         setMediaItems(validMedia);
       } else {
-        setMediaItems(prev => [...prev, ...validMedia]);
+        // 合并数据时去重，避免重复的 key
+        setMediaItems(prev => {
+          const existingIds = new Set(prev.map(item => item.id));
+          const newItems = validMedia.filter(item => !existingIds.has(item.id));
+          DEBUG_MODE && console.log(`🔄 Merging data: existing ${prev.length}, new ${newItems.length}, filtered duplicates: ${validMedia.length - newItems.length}`);
+          return [...prev, ...newItems];
+        });
       }
       
       setHasMore(has_more);
@@ -170,18 +241,25 @@ export default function Gallery() {
     }
   };
   
-  // 加载更多媒体
-  const loadMoreMedia = () => {
-    if (!loadingMore && hasMore) {
-      DEBUG_MODE && console.log(`Loading more media. Current page: ${page}, hasMore: ${hasMore}`);
-      loadMedia(page + 1);
-    }
-  };
+
   
   // 组件挂载时加载第一页数据
   useEffect(() => {
+    DEBUG_MODE && console.log('🚀 Gallery component mounted, loading first page');
     loadMedia(1);
   }, []);
+
+  // 调试状态变化
+  useEffect(() => {
+    DEBUG_MODE && console.log('📊 Gallery state changed:', {
+      page,
+      hasMore,
+      loadingMore,
+      mediaItemsLength: mediaItems.length,
+      totalItems,
+      isLoading
+    });
+  }, [page, hasMore, loadingMore, mediaItems.length, totalItems, isLoading]);
   
   // 处理媒体点击
   const handleMediaClick = (media: MediaItem) => {
@@ -315,21 +393,58 @@ export default function Gallery() {
               <p>{language === 'zh' ? '加载更多...' : 'Loading more...'}</p>
             </div>
           )}
+
+          {/* 调试模式下添加手动触发按钮 */}
+          {DEBUG_MODE && hasMore && !loadingMore && (
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              <button
+                onClick={() => {
+                  console.log('🔧 Manual trigger loadMoreMedia');
+                  loadMoreMedia();
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔧 手动加载更多 (调试)
+              </button>
+            </div>
+          )}
           
           {/* 额外添加一个用于触发无限滚动的占位元素 */}
-          {hasMore && !loadingMore && mediaItems.length > 0 && (
-            <div 
+          {(() => {
+            const shouldShow = hasMore && !loadingMore && mediaItems.length > 0;
+            DEBUG_MODE && console.log('Scroll trigger render check:', {
+              hasMore,
+              loadingMore,
+              mediaItemsLength: mediaItems.length,
+              shouldShow,
+              page,
+              totalItems
+            });
+            return shouldShow;
+          })() && (
+            <div
               ref={lastItemRef}
               className="scroll-trigger"
-              style={{ 
-                height: '40px', 
-                margin: '10px auto 20px', 
+              style={{
+                height: '40px',
+                margin: '10px auto 20px',
                 textAlign: 'center',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: 0.6,
-                transition: 'opacity 0.3s ease'
+                transition: 'opacity 0.3s ease',
+                backgroundColor: DEBUG_MODE ? 'rgba(255, 0, 0, 0.3)' : 'transparent', // 调试模式下显示更明显的红色背景
+                border: DEBUG_MODE ? '2px solid red' : 'none', // 调试模式下显示更明显的边框
+                minHeight: '40px',
+                width: '100%'
               }}
             >
               <div className="scroll-dots">
@@ -337,12 +452,42 @@ export default function Gallery() {
                 <span></span>
                 <span></span>
               </div>
+              {DEBUG_MODE && (
+                <span style={{ marginLeft: '10px', fontSize: '14px', color: 'red', fontWeight: 'bold' }}>
+                  🎯 SCROLL TRIGGER (Page: {page}, HasMore: {hasMore.toString()}, Items: {mediaItems.length})
+                </span>
+              )}
             </div>
           )}
           
           {!hasMore && mediaItems.length > 0 && (
             <div className="no-more-items">
               <p>{language === 'zh' ? '已经到底啦' : 'No more items'}</p>
+            </div>
+          )}
+
+          {/* 调试信息显示 */}
+          {DEBUG_MODE && (
+            <div style={{
+              position: 'fixed',
+              top: '10px',
+              right: '10px',
+              background: 'rgba(0,0,0,0.8)',
+              color: 'white',
+              padding: '10px',
+              borderRadius: '5px',
+              fontSize: '12px',
+              zIndex: 9999,
+              maxWidth: '300px'
+            }}>
+              <div>📊 Debug Info:</div>
+              <div>Items: {mediaItems.length}</div>
+              <div>Page: {page}</div>
+              <div>HasMore: {hasMore.toString()}</div>
+              <div>LoadingMore: {loadingMore.toString()}</div>
+              <div>IsLoading: {isLoading.toString()}</div>
+              <div>TotalItems: {totalItems}</div>
+              <div>UniqueIds: {new Set(mediaItems.map(item => item.id)).size}</div>
             </div>
           )}
         </div>
