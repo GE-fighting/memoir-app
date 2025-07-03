@@ -5,6 +5,7 @@ import { T, useLanguage } from './LanguageContext';
 import { TimelineEvent, PersonalMedia } from '../services/api-types';
 import { getCoupleSignedUrl } from '../lib/services/coupleOssService';
 import { eventService } from '../services/event-service';
+import EditStoryModal from './EditStoryModal';
 import Image from 'next/image';
 import '../styles/story-modal.css';
 
@@ -32,6 +33,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const mediaContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -174,7 +176,14 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowMenu(false);
-    alert(language === 'zh' ? '编辑功能即将推出！' : 'Edit feature coming soon!');
+    setShowEditModal(true);
+  };
+
+  const handleEditSuccess = () => {
+    // 重新加载故事详情
+    if (event && event.id) {
+      loadEventDetails();
+    }
   };
 
   const handleDelete = async () => {
@@ -546,6 +555,15 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
             </div>
           )}
         </div>
+        
+        {showEditModal && fullEvent && (
+          <EditStoryModal 
+            isOpen={showEditModal} 
+            onClose={() => setShowEditModal(false)} 
+            onSuccess={handleEditSuccess}
+            event={fullEvent}
+          />
+        )}
       </div>
     </div>
   );

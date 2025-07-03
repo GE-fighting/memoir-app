@@ -49,12 +49,15 @@ export interface CreateTimelineEventRequest {
 }
 
 export interface UpdateTimelineEventRequest {
+  event_id: string;
+  couple_id?: string;
+  start_date?: string;
+  end_date?: string;
   title?: string;
-  description?: string;
-  event_date?: string;
-  location_id?: string;
-  media_ids?: string[];
-  tags?: string[];
+  content?: string;
+  cover_url?: string;
+  location_ids?: string[];
+  photo_video_ids?: string[];
 }
 
 // 位置相关类型
