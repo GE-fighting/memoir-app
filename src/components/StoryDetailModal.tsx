@@ -23,9 +23,10 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
   const { language } = useLanguage();
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [signedMediaUrls, setSignedMediaUrls] = useState<string[]>([]);
+  const [mediaItems, setMediaItems] = useState<PersonalMedia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [mediaLoaded, setMediaLoaded] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [fullEvent, setFullEvent] = useState<TimelineEvent | null>(null);
   const [isLoadingEvent, setIsLoadingEvent] = useState(false);
@@ -34,10 +35,11 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  
+
   const mediaContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
@@ -84,6 +86,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
     const currentEvent = fullEvent || event;
     if (!currentEvent || !currentEvent.photos_videos || currentEvent.photos_videos.length === 0) {
       setSignedMediaUrls([]);
+      setMediaItems([]);
       setIsLoading(false);
       return;
     }
@@ -91,7 +94,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
     try {
       setIsLoading(true);
       setLoadingError(null);
-      setImageLoaded(false);
+      setMediaLoaded(false);
 
       const urls = await Promise.all(
         currentEvent.photos_videos.map(async (media: PersonalMedia) => {
@@ -104,6 +107,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
         })
       );
       setSignedMediaUrls(urls);
+      setMediaItems(currentEvent.photos_videos);
     } catch (error) {
       console.error('获取签名媒体URL失败:', error);
       setLoadingError(language === 'zh' ? '加载媒体失败，请稍后重试' : 'Failed to load media, please try again later');
@@ -114,17 +118,32 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
 
   useEffect(() => {
     if (isOpen && (fullEvent || event)) {
-      getSignedMediaUrls();
+      // 重置错误状态
+      setLoadingError(null);
+      setMediaLoaded(false);
+
+      const currentEvent = fullEvent || event;
+      // 只有当事件有照片时才调用 getSignedMediaUrls
+      if (currentEvent && currentEvent.photos_videos && currentEvent.photos_videos.length > 0) {
+        getSignedMediaUrls();
+      } else {
+        // 没有照片时，清除相关状态
+        setSignedMediaUrls([]);
+        setMediaItems([]);
+        setIsLoading(false);
+        setCurrentMediaIndex(0);
+      }
     } else {
       setCurrentMediaIndex(0);
-      setImageLoaded(false);
+      setMediaLoaded(false);
+      setLoadingError(null);
     }
   }, [isOpen, fullEvent, event, getSignedMediaUrls]);
 
   // 保留键盘导航功能，但简化实现
   const handlePrevMedia = useCallback(() => {
     if (signedMediaUrls.length <= 1) return;
-    setImageLoaded(false);
+    setMediaLoaded(false);
     setCurrentMediaIndex((prev) =>
       prev === 0 ? signedMediaUrls.length - 1 : prev - 1
     );
@@ -132,32 +151,32 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
 
   const handleNextMedia = useCallback(() => {
     if (signedMediaUrls.length <= 1) return;
-    setImageLoaded(false);
+    setMediaLoaded(false);
     setCurrentMediaIndex((prev) =>
       prev === signedMediaUrls.length - 1 ? 0 : prev + 1
     );
   }, [signedMediaUrls.length]);
-  
+
   const handleGoToMedia = useCallback((index: number) => {
     if (index === currentMediaIndex || signedMediaUrls.length <= 1) return;
-    setImageLoaded(false);
+    setMediaLoaded(false);
     setCurrentMediaIndex(index);
   }, [currentMediaIndex, signedMediaUrls.length]);
 
-  const handleImageLoaded = () => {
-    setImageLoaded(true);
+  const handleMediaLoaded = () => {
+    setMediaLoaded(true);
   };
 
-  const handleImageError = () => {
-    setImageLoaded(true);
-    setLoadingError(language === 'zh' ? '图片加载失败' : 'Failed to load image');
-    if (mediaContainerRef.current) {
-      const imgElement = mediaContainerRef.current.querySelector('img');
-      if (imgElement) {
-        imgElement.src = ERROR_PLACEHOLDER_IMAGE;
-        imgElement.onerror = null;
-      }
+  const handleMediaError = () => {
+    setMediaLoaded(true);
+    setLoadingError(language === 'zh' ? '媒体加载失败' : 'Failed to load media');
+  };
+
+  const getCurrentMediaType = () => {
+    if (mediaItems.length > 0 && mediaItems[currentMediaIndex]) {
+      return mediaItems[currentMediaIndex].media_type;
     }
+    return 'photo'; // 默认为图片
   };
 
   const handleClose = useCallback(() => {
@@ -283,7 +302,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
         </div>
       );
     }
-    
+
     if (eventError) {
       return (
         <div className="media-error">
@@ -295,7 +314,20 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
         </div>
       );
     }
-    
+
+    // 检查当前事件是否有照片
+    const hasPhotos = currentEvent && currentEvent.photos_videos && currentEvent.photos_videos.length > 0;
+
+    // 如果没有照片，直接显示占位符，不显示加载状态或错误
+    if (!hasPhotos) {
+      return (
+        <div className="media-placeholder">
+          <i className="fas fa-image"></i>
+          <p><T zh="暂无图片" en="No Images" /></p>
+        </div>
+      );
+    }
+
     if (isLoading) {
         return (
           <div className="media-loading">
@@ -331,57 +363,73 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
         );
     }
     
+    const currentMediaType = getCurrentMediaType();
+
     return (
-      <div 
-        className="media-container" 
+      <div
+        className="media-container"
         ref={mediaContainerRef}
       >
-        <img 
-          key={mediaToShow[currentIndex]} // Add key for re-rendering on src change
-          src={mediaToShow[currentIndex]} 
-          alt={`${currentEvent.title} - ${currentIndex + 1}`} 
-          className={`media-image ${imageLoaded ? 'loaded' : ''}`}
-          onLoad={handleImageLoaded}
-          onError={handleImageError}
-        />
-        
-        {!imageLoaded && (
-          <div className="image-loading-overlay">
+        {currentMediaType === 'photo' ? (
+          <img
+            key={mediaToShow[currentIndex]} // Add key for re-rendering on src change
+            src={mediaToShow[currentIndex]}
+            alt={`${currentEvent.title} - ${currentIndex + 1}`}
+            className={`media-image ${mediaLoaded ? 'loaded' : ''}`}
+            onLoad={handleMediaLoaded}
+            onError={handleMediaError}
+          />
+        ) : (
+          <video
+            key={mediaToShow[currentIndex]} // Add key for re-rendering on src change
+            ref={videoRef}
+            src={mediaToShow[currentIndex]}
+            className={`media-video ${mediaLoaded ? 'loaded' : ''}`}
+            controls
+            controlsList="nodownload"
+            onLoadedData={handleMediaLoaded}
+            onError={handleMediaError}
+            onPlay={() => setMediaLoaded(true)}
+          />
+        )}
+
+        {!mediaLoaded && (
+          <div className="media-loading-overlay">
             <div className="loading-spinner"></div>
           </div>
         )}
-        
-        {loadingError && imageLoaded && (
-          <div className="image-error-overlay">
+
+        {loadingError && mediaLoaded && (
+          <div className="media-error-overlay">
             <i className="fas fa-exclamation-circle"></i>
             <p>{loadingError}</p>
           </div>
         )}
-        
+
         {/* 添加左右导航按钮 - 仅在有多个媒体且已加载完成时显示 */}
-        {mediaToShow.length > 1 && imageLoaded && (
+        {mediaToShow.length > 1 && mediaLoaded && (
           <>
-            <button 
-              className="media-nav-button media-nav-prev" 
+            <button
+              className="media-nav-button media-nav-prev"
               onClick={(e) => {
                 e.stopPropagation();
                 handlePrevMedia();
               }}
-              aria-label={language === 'zh' ? '上一张' : 'Previous'}
+              aria-label={language === 'zh' ? '上一个' : 'Previous'}
             >
               <i className="fas fa-chevron-left"></i>
             </button>
-            <button 
-              className="media-nav-button media-nav-next" 
+            <button
+              className="media-nav-button media-nav-next"
               onClick={(e) => {
                 e.stopPropagation();
                 handleNextMedia();
               }}
-              aria-label={language === 'zh' ? '下一张' : 'Next'}
+              aria-label={language === 'zh' ? '下一个' : 'Next'}
             >
               <i className="fas fa-chevron-right"></i>
             </button>
-            
+
             {/* 添加圆点导航指示器 */}
             <div className="media-dots-nav">
               {mediaToShow.map((_, index) => (
@@ -392,7 +440,7 @@ export default function StoryDetailModal({ isOpen, onClose, event, onDeleted }: 
                     e.stopPropagation();
                     handleGoToMedia(index);
                   }}
-                  aria-label={language === 'zh' ? `查看第${index + 1}张` : `View image ${index + 1}`}
+                  aria-label={language === 'zh' ? `查看第${index + 1}个` : `View media ${index + 1}`}
                 />
               ))}
             </div>

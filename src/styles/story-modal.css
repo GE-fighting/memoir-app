@@ -291,12 +291,28 @@
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
 }
 
-.media-image.loaded { 
-  opacity: 1; 
+.media-image.loaded {
+  opacity: 1;
 }
 
-.image-loading-overlay, 
-.image-error-overlay {
+.media-video {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.media-video.loaded {
+  opacity: 1;
+}
+
+.media-loading-overlay,
+.media-error-overlay {
   position: absolute;
   top: 0; 
   left: 0; 
