@@ -7,6 +7,7 @@ import CreateAlbumModal from './CreateAlbumModal';
 import UploadPhotosModal from './UploadPhotosModal';
 import { albumService, Album, DeleteCoupleAlbumPhotosRequest } from '@/services/album-service';
 import { getCoupleSignedUrl } from '@/lib/services/coupleOssService';
+import ImageViewer from './ImageViewer';
 import '@/styles/modal.css';
 import '@/styles/albums.css';
 import '@/styles/upload.css';
@@ -676,38 +677,40 @@ export default function Albums() {
       
       {/* 媒体查看器模态框 */}
       {isMediaViewerOpen && currentMedia && (
-        <div className="modal-overlay media-viewer-overlay" onClick={handleCloseMediaViewer}>
-          <div className="media-viewer-container" onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn media-close-btn" onClick={handleCloseMediaViewer}>
-              <i className="fas fa-times"></i>
-            </button>
-            
-            {currentMedia.media_type === 'photo' ? (
-              <img 
-                src={currentMedia.url} 
-                alt={currentMedia.title || 'Photo'} 
-                className="media-viewer-image"
-              />
-            ) : (
-              <div className="media-viewer-video-container">
-                <video
-                  ref={videoRef}
-                  src={currentMedia.url}
-                  controls
-                  className="media-viewer-video"
-                  controlsList="nodownload"
-                />
+        <>
+          {currentMedia.media_type === 'photo' ? (
+            <ImageViewer
+              src={currentMedia.url || ''}
+              alt={currentMedia.title || 'Photo'}
+              onClose={handleCloseMediaViewer}
+            />
+          ) : (
+            <div className="modal-overlay media-viewer-overlay" onClick={handleCloseMediaViewer}>
+              <div className="media-viewer-container" onClick={(e) => e.stopPropagation()}>
+                <button className="close-btn media-close-btn" onClick={handleCloseMediaViewer}>
+                  <i className="fas fa-times"></i>
+                </button>
+
+                <div className="media-viewer-video-container">
+                  <video
+                    ref={videoRef}
+                    src={currentMedia.url}
+                    controls
+                    className="media-viewer-video"
+                    controlsList="nodownload"
+                  />
+                </div>
+
+                {currentMedia.title && (
+                  <div className="media-viewer-caption">
+                    <h3>{currentMedia.title}</h3>
+                    {currentMedia.description && <p>{currentMedia.description}</p>}
+                  </div>
+                )}
               </div>
-            )}
-            
-            {currentMedia.title && (
-              <div className="media-viewer-caption">
-                <h3>{currentMedia.title}</h3>
-                {currentMedia.description && <p>{currentMedia.description}</p>}
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </>
       )}
       
       <style jsx>{`

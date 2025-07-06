@@ -7,6 +7,7 @@ import { albumService, MediaListResponse } from '@/services/album-service';
 import { getCoupleSignedUrl } from '@/lib/services/coupleOssService';
 import LoadingSpinner from './ui/loading-spinner';
 import { useNotification } from './ui/notification';
+import ImageViewer from './ImageViewer';
 import '../styles/gallery.css';
 
 // 调试模式开关，设置为true时显示调试日志
@@ -495,47 +496,49 @@ export default function Gallery() {
       
       {/* 媒体查看器模态框 */}
       {isMediaViewerOpen && currentMedia && (
-        <div className="modal-overlay media-viewer-overlay" onClick={handleCloseMediaViewer}>
-          <div className="media-viewer-container" onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn media-close-btn" onClick={handleCloseMediaViewer}>
-              <i className="fas fa-times"></i>
-            </button>
-            
-            {currentMedia.media_type === 'photo' ? (
-              <img 
-                src={currentMedia.url} 
-                alt={currentMedia.title || 'Photo'} 
-                className="media-viewer-image"
-              />
-            ) : (
-              <div className="media-viewer-video-container">
-                <video
-                  ref={videoRef}
-                  src={currentMedia.url}
-                  controls
-                  className="media-viewer-video"
-                  controlsList="nodownload"
-                />
-              </div>
-            )}
-            
-            <div className="media-viewer-info">
-              {currentMedia.title && <h3>{currentMedia.title}</h3>}
-              {currentMedia.description && <p className="media-description">{currentMedia.description}</p>}
-              
-              <div className="media-meta">
-                {currentMedia.album_title && (
-                  <span className="album-info">
-                    <i className="fas fa-images"></i> {currentMedia.album_title}
-                  </span>
-                )}
-                <span className="date-info">
-                  <i className="fas fa-calendar"></i> {formatDate(currentMedia.created_at)}
-                </span>
+        <>
+          {currentMedia.media_type === 'photo' ? (
+            <ImageViewer
+              src={currentMedia.url || ''}
+              alt={currentMedia.title || 'Photo'}
+              onClose={handleCloseMediaViewer}
+            />
+          ) : (
+            <div className="modal-overlay media-viewer-overlay" onClick={handleCloseMediaViewer}>
+              <div className="media-viewer-container" onClick={(e) => e.stopPropagation()}>
+                <button className="close-btn media-close-btn" onClick={handleCloseMediaViewer}>
+                  <i className="fas fa-times"></i>
+                </button>
+
+                <div className="media-viewer-video-container">
+                  <video
+                    ref={videoRef}
+                    src={currentMedia.url}
+                    controls
+                    className="media-viewer-video"
+                    controlsList="nodownload"
+                  />
+                </div>
+
+                <div className="media-viewer-info">
+                  {currentMedia.title && <h3>{currentMedia.title}</h3>}
+                  {currentMedia.description && <p className="media-description">{currentMedia.description}</p>}
+
+                  <div className="media-meta">
+                    {currentMedia.album_title && (
+                      <span className="album-info">
+                        <i className="fas fa-images"></i> {currentMedia.album_title}
+                      </span>
+                    )}
+                    <span className="date-info">
+                      <i className="fas fa-calendar"></i> {formatDate(currentMedia.created_at)}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </>
   );
