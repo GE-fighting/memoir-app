@@ -10,6 +10,13 @@ import {
   WishlistQueryParams
 } from "./api-types";
 
+
+export interface AssociateAttachmentsRequest {
+  wishlist_id: string;
+  attachment_ids: string[];
+}
+
+
 /**
  * 心愿清单服务
  * 处理与心愿清单相关的 API 请求
@@ -71,5 +78,28 @@ export const wishlistService = {
    */
   deleteWishlistItem: async (id: string): Promise<void> => {
     return apiClient.delete<void>(`/wishlist/${id}`);
+  },
+
+  /**
+   * 关联附件到心愿清单项
+   * @param request 关联请求
+   * @returns 关联结果
+   */
+  associateAttachments: async (request: AssociateAttachmentsRequest): Promise<void> => {
+    return apiClient.post<void>("/wishlist/attachments", request);
+  },
+
+  /**
+   * 获取心愿清单列表（包含附件）
+   * @param coupleId 情侣ID
+   * @returns 包含附件的心愿清单列表
+   */
+  getWishlistItemsWithAttachments: async (coupleId: string): Promise<WishlistItem[]> => {
+    return apiClient.get<WishlistItem[]>("/wishlist/list", { 
+      params: { 
+        couple_id: coupleId,
+        include_attachments: true
+      } 
+    });
   }
 }; 

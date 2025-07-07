@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import { useWishModal } from './ui/wish-modal';
+import WishCompletionModal from './ui/wish-completion-modal';
+import WishAttachments from './ui/wish-attachments';
 import { wishlistService } from '@/services/wishlist-service';
 import { WishlistItem as WishlistItemType, WishlistItemStatus } from '@/services/api-types';
 import { useAuth } from '@/contexts/auth-context';
@@ -15,6 +17,7 @@ export default function Wishlist() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingWish, setEditingWish] = useState<WishlistItemType | null>(null);
+  const [selectedWishForCompletion, setSelectedWishForCompletion] = useState<WishlistItemType | null>(null);
   
   // 从用户信息或localStorage中获取情侣ID
   const coupleId = user?.couple_id || 
@@ -34,6 +37,8 @@ export default function Wishlist() {
       setLoading(true);
       setError(null);
       console.log(`Fetching wishlist items for couple ID: ${coupleId}`);
+      
+      // 获取心愿清单项，包括附件
       const items = await wishlistService.getWishlistItems(coupleId);
       setWishlist(items);
     } catch (err) {
@@ -44,6 +49,7 @@ export default function Wishlist() {
     }
   };
 
+  // 使用心愿创建/编辑模态框
   const { openModal, WishModalComponent } = useWishModal({
     onSave: async (wishData) => {
       try {
@@ -102,20 +108,42 @@ export default function Wishlist() {
 
   const toggleComplete = async (id: string) => {
     try {
-      setLoading(true);
-      setError(null);
-      
       const item = wishlist.find(wish => wish.id === id);
       if (!item) return;
       
-      const newStatus = item.status === WishlistItemStatus.COMPLETED 
-        ? WishlistItemStatus.PENDING 
-        : WishlistItemStatus.COMPLETED;
+      // 如果已经是已完成状态，则设置为未完成
+      if (item.status === WishlistItemStatus.COMPLETED) {
+        setLoading(true);
+        setError(null);
+        
+        await wishlistService.updateWishlistItemStatus(id, { status: WishlistItemStatus.PENDING });
+        
+        setWishlist(wishlist.map(wish => 
+          wish.id === id ? { ...wish, status: WishlistItemStatus.PENDING } : wish
+        ));
+        
+        setLoading(false);
+      } else {
+        // 如果是未完成状态，打开完成模态框
+        setSelectedWishForCompletion(item);
+      }
+    } catch (err) {
+      console.error('Failed to update wishlist item status:', err);
+      setError(language === 'zh' ? '更新心愿单状态失败' : 'Failed to update wishlist item status');
+      setLoading(false);
+    }
+  };
+
+  // 心愿完成后处理
+  const handleWishCompletion = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
       
-      await wishlistService.updateWishlistItemStatus(id, { status: newStatus });
+      await wishlistService.updateWishlistItemStatus(id, { status: WishlistItemStatus.COMPLETED });
       
       setWishlist(wishlist.map(wish => 
-        wish.id === id ? { ...wish, status: newStatus } : wish
+        wish.id === id ? { ...wish, status: WishlistItemStatus.COMPLETED } : wish
       ));
     } catch (err) {
       console.error('Failed to update wishlist item status:', err);
@@ -146,6 +174,17 @@ export default function Wishlist() {
   return (
     <div className="wish-container">
       {WishModalComponent}
+      <WishCompletionModal
+        isOpen={selectedWishForCompletion !== null}
+        onClose={() => setSelectedWishForCompletion(null)}
+        onSuccess={() => {
+          if (selectedWishForCompletion) {
+            handleWishCompletion(selectedWishForCompletion.id);
+            setSelectedWishForCompletion(null);
+          }
+        }}
+        wishItem={selectedWishForCompletion}
+      />
       
       <div className="category-tabs">
         <button 
@@ -207,7 +246,6 @@ export default function Wishlist() {
               <div className="wish-content">
                 <h3 className="wish-title">
                   {wish.title}
-
                 </h3>
                 {wish.description && <p className="wish-description">{wish.description}</p>}
                 {wish.reminder_date && (
@@ -215,6 +253,11 @@ export default function Wishlist() {
                     <i className="fas fa-calendar"></i>
                     <span>{wish.reminder_date}</span>
                   </div>
+                )}
+                
+                {/* 添加附件展示区域 */}
+                {wish.status === WishlistItemStatus.COMPLETED && wish.attachments && wish.attachments.length > 0 && (
+                  <WishAttachments attachments={wish.attachments} />
                 )}
               </div>
               <div className="wish-actions">

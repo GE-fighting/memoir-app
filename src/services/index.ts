@@ -14,6 +14,8 @@ export { locationService } from './location-service';
 export { mediaService } from './personal-media-service';
 export { wishlistService } from './wishlist-service';
 export { authService } from './auth-service';
+export { attachmentService } from './attachment-service';
+export { albumService } from './album-service';
 
 // 导出类型定义
 export * from './api-types'; 

@@ -19,8 +19,35 @@ export interface UserPreferences {
   notifications_enabled: boolean;
 }
 
+// 附件相关类型
+export interface Attachment {
+  id: string;
+  user_id: string;
+  couple_id?: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  url: string;
+  space_type: string;
+  created_at: string;
+  updated_at: string;
+}
 
+export interface CreateAttachmentRequest {
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  url: string;
+  couple_id?: string;
+  space_type: 'personal' | 'couple';
+}
 
+export interface AttachmentQueryParams extends PageParams {
+  user_id?: string;
+  couple_id?: string;
+  space_type?: 'personal' | 'couple';
+  file_type?: string;
+}
 
 // 时间轴事件相关类型
 export interface TimelineEvent {
@@ -131,6 +158,7 @@ export interface WishlistItem {
   reminder_date?: string; // 格式: "2006-01-02"
   created_at: string;
   updated_at: string;
+  attachments?: Attachment[];
 }
 
 export interface CreateWishlistItemRequest {
