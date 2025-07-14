@@ -1,6 +1,7 @@
 "use client";
 
 import { AxiosError } from "axios";
+import { ApiError } from "@/services/api-client";
 
 /**
  * API 错误类型
@@ -17,6 +18,11 @@ export interface ApiErrorResponse {
  * @returns 格式化的错误消息
  */
 export function parseApiError(error: unknown): string {
+  // 处理自定义 ApiError
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+  
   if (error instanceof AxiosError) {
     const response = error.response?.data as ApiErrorResponse;
     
@@ -75,6 +81,18 @@ export const errorHandler = {
    * @returns 格式化的认证错误消息
    */
   getAuthErrorMessage(error: unknown): string {
+    // 处理自定义 ApiError
+    if (error instanceof ApiError) {
+      switch (error.code) {
+        case 401:
+          return "用户名或密码错误";
+        case 409:
+          return "用户已存在，请直接登录或使用其他邮箱";
+        default:
+          return error.message;
+      }
+    }
+    
     if (error instanceof AxiosError) {
       switch (error.response?.status) {
         case 401:

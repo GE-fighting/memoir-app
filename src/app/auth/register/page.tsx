@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { errorHandler } from "@/utils/error-handler";
+import { authService } from "@/services/auth-service";
 import AuthVerify from "@/components/auth/auth-verify";
 import { useTheme } from "@/contexts/theme-context";
 
@@ -17,6 +18,7 @@ const registerSchema = z.object({
   username: z.string().min(3, "用户名至少需要3个字符").max(50, "用户名不能超过50个字符"),
   email: z.string().email("请输入有效的电子邮箱"),
   password: z.string().min(6, "密码至少需要6个字符"),
+  verification_code: z.string().min(4, "请输入有效的验证码").max(6, "请输入有效的验证码"),
   pair_token: z.string().optional(),
 });
 
@@ -28,20 +30,87 @@ export default function RegisterPage() {
   const { theme } = useTheme();
   const [apiError, setApiError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [verifySuccess, setVerifySuccess] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const currentYear = new Date().getFullYear();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
+    getValues,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      verification_code: "",
+    }
   });
+
+  // 监听邮箱输入
+  const watchEmail = watch("email");
+
+  // 处理倒计时
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [countdown]);
+
+  // 发送验证码
+  const sendVerificationCode = async () => {
+    if (!watchEmail || !watchEmail.match(/^\S+@\S+\.\S+$/)) {
+      setApiError("请输入有效的电子邮箱");
+      return;
+    }
+
+    setIsSendingCode(true);
+    setApiError(null);
+
+    try {
+      await authService.sendVerificationCode(watchEmail);
+        setCountdown(60); // 60秒倒计时
+        setApiError(null);
+    } catch (error) {
+      const errorMessage = errorHandler.parseApiError(error);
+      setApiError(errorMessage || "发送验证码失败，请稍后再试");
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  // 验证邮箱
+  const verifyEmailCode = async (email: string, code: string) => {
+    try {
+        await authService.verifyEmail(email, code);
+        setVerifySuccess(true);
+        return true;
+    } catch (error) {
+      const errorMessage = errorHandler.parseApiError(error);
+      setApiError(errorMessage || "验证失败，请重试");
+      return false;
+    }
+  };
 
   const onSubmit = async (data: RegisterFormData) => {
     setApiError(null);
     setSuccess(false);
+
     try {
+      // 首先验证邮箱
+      const verified = await verifyEmailCode(data.email, data.verification_code);
+      if (!verified) {
+        return;
+      }
+
       // 使用auth上下文的register方法
       const registerSuccess = await registerUser(
         data.username, 
@@ -192,6 +261,52 @@ export default function RegisterPage() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>验证码</label>
+                <div className="relative mt-1 flex">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    {...register("verification_code")}
+                    className="w-full rounded-lg pl-10 px-4 py-2.5 shadow-sm transition focus:outline-none focus:ring-2"
+                    style={{
+                      backgroundColor: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-primary)',
+                      color: 'var(--text-primary)'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--border-focus)';
+                      e.target.style.backgroundColor = 'var(--bg-primary)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'var(--border-primary)';
+                      e.target.style.backgroundColor = 'var(--bg-secondary)';
+                    }}
+                    placeholder="输入验证码"
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    className="ml-3 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition"
+                    style={{
+                      backgroundColor: countdown > 0 ? 'var(--bg-tertiary)' : 'var(--accent-primary)',
+                      color: countdown > 0 ? 'var(--text-tertiary)' : 'var(--text-inverse)',
+                    }}
+                    disabled={countdown > 0 || !watchEmail || isSendingCode}
+                    onClick={sendVerificationCode}
+                  >
+                    {isSendingCode ? "发送中..." : countdown > 0 ? `重新发送(${countdown}s)` : "获取验证码"}
+                  </button>
+                  {errors.verification_code && (
+                    <p className="mt-1 text-sm" style={{ color: 'var(--accent-danger)' }}>{errors.verification_code.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>密码</label>
                 <div className="relative mt-1">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -308,6 +423,17 @@ export default function RegisterPage() {
                   style={{ color: 'var(--accent-success)' }}
                 >
                   注册成功！
+                </motion.p>
+              )}
+
+              {verifySuccess && !success && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center text-sm"
+                  style={{ color: 'var(--accent-success)' }}
+                >
+                  {/* 邮箱验证成功！正在完成注册... */}
                 </motion.p>
               )}
             </form>

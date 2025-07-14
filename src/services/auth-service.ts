@@ -11,6 +11,19 @@ export interface AuthResponse {
   token_type: string;
 }
 
+
+
+// 邮件验证请求类型
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+// 发送验证码请求类型
+export interface SendCodeRequest {
+  email: string;
+}
+
 /**
  * 认证服务
  * 处理用户认证相关的 API 请求
@@ -66,6 +79,42 @@ export const authService = {
     } catch (error) {
       const errorMessage = errorHandler.getAuthErrorMessage(error);
       console.error("注册失败:", errorMessage);
+      throw error;
+    }
+  },
+
+  /**
+   * 发送邮箱验证码
+   * @param email 用户邮箱
+   * @returns 发送结果
+   */
+  sendVerificationCode: async (email: string): Promise<any> => {
+    try {
+      return await apiClient.post<any>("/email/resend-code", {
+        email,
+      });
+    } catch (error) {
+      const errorMessage = errorHandler.parseApiError(error);
+      console.error("发送验证码失败:", errorMessage);
+      throw error;
+    }
+  },
+
+  /**
+   * 验证邮箱验证码
+   * @param email 用户邮箱
+   * @param code 验证码
+   * @returns 验证结果
+   */
+  verifyEmail: async (email: string, code: string): Promise<any> => {
+    try {
+      return await apiClient.post<any>("/email/verify", {
+        email,
+        code,
+      });
+    } catch (error) {
+      const errorMessage = errorHandler.parseApiError(error);
+      console.error("验证邮箱失败:", errorMessage);
       throw error;
     }
   },
