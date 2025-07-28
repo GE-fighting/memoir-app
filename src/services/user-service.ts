@@ -22,7 +22,7 @@ export const userService = {
    * @returns 更新后的用户信息
    */
   updateUser: async (userData: Partial<User>): Promise<User> => {
-    return apiClient.put<User>("/users/me", userData);
+    return apiClient.put<User>("/users/update",userData);
   },
 
   /**
@@ -48,5 +48,18 @@ export const userService = {
    */
   existCouple: async (): Promise<boolean> => {
     return apiClient.get<boolean>("/users/exist-couple");
+  },
+  
+  /**
+   * 更新用户密码
+   * @param currentPassword 当前密码
+   * @param newPassword 新密码
+   * @returns 更新结果
+   */
+  updatePassword: async (currentPassword: string, newPassword: string): Promise<any> => {
+    return apiClient.put<any>("/users/password", {
+      current_password: currentPassword,
+      new_password: newPassword
+    });
   },
 }; 

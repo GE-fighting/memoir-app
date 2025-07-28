@@ -4,9 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { T, useLanguage } from './LanguageContext';
 import { userService } from '../services/user-service';
 import { coupleService, CoupleInfoDTO } from '@/services/couple-service';
+import PersonalInfo from './PersonalInfo';
+import ChangePassword from './ChangePassword';
+
+// 定义标签页类型
+type TabType = 'couple' | 'personal' | 'password';
 
 export default function Account() {
   useLanguage();
+  const [activeTab, setActiveTab] = useState<TabType>('couple');
   const [hasCouple, setHasCouple] = useState<boolean>(false);
   const [anniversaryDate, setAnniversaryDate] = useState<string>("2021-08-18");
   const [destinKey, setDestinKey] = useState<string>("");
@@ -72,13 +78,10 @@ export default function Account() {
     }
   };
   
+  // 渲染情侣设置标签页
+  const renderCoupleTab = () => {
   return (
-    <div className="account-container">
-      <div className="account-card">
-        <h2 className="card-title">
-          <T zh="爱的记忆" en="Love Story" />
-        </h2>
-        
+      <div className="couple-tab">
         {hasCouple && coupleInfo && (
           <div className="couple-info">
             <div className="couple-avatar-group">
@@ -129,6 +132,48 @@ export default function Account() {
           )}
         </div>
       </div>
+    );
+  };
+  
+  return (
+    <div className="account-container">
+      <div className="account-card">
+        <h2 className="card-title">
+          <T zh="账户设置" en="Account Settings" />
+        </h2>
+        
+        {/* 标签页导航 */}
+        <div className="tabs-nav">
+          <button 
+            className={`tab-btn ${activeTab === 'couple' ? 'active' : ''}`}
+            onClick={() => setActiveTab('couple')}
+          >
+            <i className="fas fa-heart"></i>
+            <T zh="爱的记忆" en="Love Story" />
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'personal' ? 'active' : ''}`}
+            onClick={() => setActiveTab('personal')}
+          >
+            <i className="fas fa-user"></i>
+            <T zh="个人信息" en="Personal Info" />
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'password' ? 'active' : ''}`}
+            onClick={() => setActiveTab('password')}
+          >
+            <i className="fas fa-lock"></i>
+            <T zh="修改密码" en="Change Password" />
+          </button>
+        </div>
+        
+        {/* 标签页内容 */}
+        <div className="tab-content">
+          {activeTab === 'couple' && renderCoupleTab()}
+          {activeTab === 'personal' && <PersonalInfo />}
+          {activeTab === 'password' && <ChangePassword />}
+        </div>
+      </div>
       
       <style jsx>{`
         .account-container {
@@ -154,6 +199,41 @@ export default function Account() {
           color: var(--text-primary, #333);
           text-align: center;
           font-weight: 600;
+        }
+        
+        .tabs-nav {
+          display: flex;
+          border-bottom: 1px solid var(--border-primary, #eee);
+          margin-bottom: 24px;
+          overflow-x: auto;
+        }
+        
+        .tab-btn {
+          padding: 12px 16px;
+          background: none;
+          border: none;
+          border-bottom: 2px solid transparent;
+          color: var(--text-secondary, #666);
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+        
+        .tab-btn:hover {
+          color: var(--accent-primary, #6c5ce7);
+        }
+        
+        .tab-btn.active {
+          color: var(--accent-primary, #6c5ce7);
+          border-bottom-color: var(--accent-primary, #6c5ce7);
+        }
+        
+        .tab-content {
+          min-height: 300px;
         }
         
         .couple-info {
