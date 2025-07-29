@@ -8,6 +8,8 @@ import UploadPhotosModal from './UploadPhotosModal';
 import { albumService, Album, DeleteCoupleAlbumPhotosRequest } from '@/services/album-service';
 import { getCoupleSignedUrl } from '@/lib/services/coupleOssService';
 import ImageViewer from './ImageViewer';
+import defaultCovers, { fallbackCovers } from '@/utils/default-covers';
+import { useConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import '@/styles/modal.css';
 import '@/styles/albums.css';
 import '@/styles/upload.css';
@@ -48,26 +50,32 @@ export default function Albums() {
   // 相册删除状态
   const [isDeletingAlbum, setIsDeletingAlbum] = useState<string | null>(null);
   
+  // 使用确认对话框
+  const { openDialog, ConfirmationDialogComponent } = useConfirmationDialog();
+  
   // 默认封面图片集合，当相册没有封面时随机选择一个
-  const defaultCovers = [
-    "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=500&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?q=80&w=500&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?q=80&w=500&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1522204538344-922f76ecc041?q=80&w=500&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1556103255-4443dbae8e5a?q=80&w=500&auto=format&fit=crop"
-  ];
+  const defaultCoversArray = defaultCovers;
   
   // 获取默认封面图片
   const getDefaultCover = (albumId: string) => {
     // 使用相册ID作为种子，确保同一个相册总是获得相同的默认封面
-    const index = parseInt(albumId.substring(albumId.length - 2), 16) % defaultCovers.length;
-    return defaultCovers[index];
+    const index = parseInt(albumId.substring(albumId.length - 2), 16) % defaultCoversArray.length;
+    return defaultCoversArray[index];
+  };
+  
+  // 处理图片加载失败的情况
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, fallbackUrl: string) => {
+    // 如果图片加载失败，尝试使用备用图片
+    const img = e.target as HTMLImageElement;
+    if (img.src !== fallbackUrl) {
+      img.src = fallbackUrl;
+    }
   };
   
   // 加载相册列表
-  const loadAlbums = async () => {
-    // 如果已经加载过相册，不再重复加载
-    if (albumsLoaded) return;
+  const loadAlbums = async (forceReload = false) => {
+    // 如果已经加载过相册且不是强制重新加载，不再重复加载
+    if (albumsLoaded && !forceReload) return;
     
     try {
       setIsLoading(true);
@@ -105,8 +113,8 @@ export default function Albums() {
   
   // 创建相册成功后的回调
   const handleAlbumCreated = () => {
-    // 重新加载相册列表
-    loadAlbums();
+    // 重新加载相册列表（强制刷新）
+    loadAlbums(true);
   };
   
   // 处理上传照片按钮点击
@@ -218,38 +226,43 @@ export default function Albums() {
   const handleDeleteAlbum = async (albumId: string, albumTitle: string, e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
     
-    if (window.confirm(
-      language === 'zh'
-        ? `确定要删除相册 "${albumTitle}" 吗？`
-        : `Are you sure you want to delete the album "${albumTitle}"?`
-    )) {
-      try {
-        // 设置正在删除的相册ID
-        setIsDeletingAlbum(albumId);
-        
-        // 调用删除API
-        await albumService.deleteAlbum(albumId);
-        
-        // 从相册列表中移除已删除的相册
-        setAlbums(prevAlbums => prevAlbums.filter(album => album.id !== albumId));
-        
-        // 如果当前打开的是被删除的相册，关闭详情页
-        if (currentAlbum && currentAlbum.id === albumId) {
-          setIsAlbumDetailOpen(false);
-          setCurrentAlbum(null);
-          setAlbumPhotos([]);
+    // 使用自定义确认对话框
+    openDialog({
+      title: language === 'zh' ? '删除相册' : 'Delete Album',
+      message: language === 'zh' 
+        ? `确定要删除相册 "${albumTitle}" 吗？此操作不可撤销。` 
+        : `Are you sure you want to delete the album "${albumTitle}"? This action cannot be undone.`,
+      confirmText: language === 'zh' ? '删除' : 'Delete',
+      cancelText: language === 'zh' ? '取消' : 'Cancel',
+      onConfirm: async () => {
+        try {
+          // 设置正在删除的相册ID
+          setIsDeletingAlbum(albumId);
+          
+          // 调用删除API
+          await albumService.deleteAlbum(albumId);
+          
+          // 从相册列表中移除已删除的相册
+          setAlbums(prevAlbums => prevAlbums.filter(album => album.id !== albumId));
+          
+          // 如果当前打开的是被删除的相册，关闭详情页
+          if (currentAlbum && currentAlbum.id === albumId) {
+            setIsAlbumDetailOpen(false);
+            setCurrentAlbum(null);
+            setAlbumPhotos([]);
+          }
+          
+          // 显示成功消息
+          // TODO: 使用通知组件显示成功消息
+        } catch (err) {
+          console.error('Failed to delete album:', err);
+          // TODO: 使用通知组件显示错误消息
+        } finally {
+          // 清除正在删除状态
+          setIsDeletingAlbum(null);
         }
-        
-        // 显示成功消息
-        alert(language === 'zh' ? '相册删除成功' : 'Album deleted successfully');
-      } catch (err) {
-        console.error('Failed to delete album:', err);
-        alert(language === 'zh' ? '删除相册失败' : 'Failed to delete album');
-      } finally {
-        // 清除正在删除状态
-        setIsDeletingAlbum(null);
       }
-    }
+    });
   };
   
   // 处理相册点击
@@ -331,42 +344,45 @@ export default function Albums() {
   const handleBulkDelete = async () => {
     if (selectedPhotos.length === 0 || !currentAlbum) return;
     
-    // 确认是否删除
-    const confirmMessage = language === 'zh' 
-      ? `确定要删除选中的 ${selectedPhotos.length} 张照片吗？` 
-      : `Are you sure you want to delete ${selectedPhotos.length} selected photos?`;
-    
-    if (window.confirm(confirmMessage)) {
-      try {
-        setIsDeleting(true);
-        
-        // 调用删除API
-        const deleteParams: DeleteCoupleAlbumPhotosRequest = {
-          album_id: currentAlbum.id,
-          photo_video_ids: selectedPhotos
-        };
-        
-        await albumService.deleteCoupleAlbumPhotos(deleteParams);
-        
-        // 更新UI状态
-        // 从相册照片列表中移除已删除的照片
-        setAlbumPhotos(prev => prev.filter(photo => !selectedPhotos.includes(photo.id)));
-        
-        // 清空选中的照片
-        setSelectedPhotos([]);
-        
-        // 可选：退出选择模式
-        setIsSelectionMode(false);
-        
-        // 提示删除成功
-        alert(language === 'zh' ? '删除成功' : 'Deleted successfully');
-      } catch (err) {
-        console.error('Failed to delete photos:', err);
-        alert(language === 'zh' ? '删除照片失败' : 'Failed to delete photos');
-      } finally {
-        setIsDeleting(false);
+    // 使用自定义确认对话框
+    openDialog({
+      title: language === 'zh' ? '删除照片' : 'Delete Photos',
+      message: language === 'zh' 
+        ? `确定要删除选中的 ${selectedPhotos.length} 张照片吗？此操作不可撤销。` 
+        : `Are you sure you want to delete ${selectedPhotos.length} selected photos? This action cannot be undone.`,
+      confirmText: language === 'zh' ? '删除' : 'Delete',
+      cancelText: language === 'zh' ? '取消' : 'Cancel',
+      onConfirm: async () => {
+        try {
+          setIsDeleting(true);
+          
+          // 调用删除API
+          const deleteParams: DeleteCoupleAlbumPhotosRequest = {
+            album_id: currentAlbum.id,
+            photo_video_ids: selectedPhotos
+          };
+          
+          await albumService.deleteCoupleAlbumPhotos(deleteParams);
+          
+          // 更新UI状态
+          // 从相册照片列表中移除已删除的照片
+          setAlbumPhotos(prev => prev.filter(photo => !selectedPhotos.includes(photo.id)));
+          
+          // 清空选中的照片
+          setSelectedPhotos([]);
+          
+          // 可选：退出选择模式
+          setIsSelectionMode(false);
+          
+          // TODO: 使用通知组件显示成功消息
+        } catch (err) {
+          console.error('Failed to delete photos:', err);
+          // TODO: 使用通知组件显示错误消息
+        } finally {
+          setIsDeleting(false);
+        }
       }
-    }
+    });
   };
   
   // 筛选相册
@@ -448,8 +464,15 @@ export default function Albums() {
                   src={album.cover_url || getDefaultCover(album.id)} 
                   alt={album.title} 
                   onError={(e) => {
-                    // 如果图片加载失败，使用默认封面
-                    (e.target as HTMLImageElement).src = getDefaultCover(album.id);
+                    // 如果图片加载失败，使用备用封面
+                    const defaultCover = getDefaultCover(album.id);
+                    const index = defaultCoversArray.indexOf(defaultCover);
+                    if (index !== -1 && fallbackCovers[index]) {
+                      (e.target as HTMLImageElement).src = fallbackCovers[index];
+                    } else {
+                      // 如果找不到对应的备用图片，使用通用备用图片
+                      (e.target as HTMLImageElement).src = "https://placehold.co/500x500/CCCCCC/FFFFFF?text=Cover+Not+Available";
+                    }
                   }}
                 />
                 <div className="album-info">
@@ -712,6 +735,9 @@ export default function Albums() {
           )}
         </>
       )}
+      
+      {/* 确认对话框 */}
+      {ConfirmationDialogComponent}
       
       <style jsx>{`
         .album-detail-modal {

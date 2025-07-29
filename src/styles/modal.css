@@ -458,13 +458,13 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   overflow: hidden;
-  max-height: 150px;
 }
 
 .cover-preview img {
   width: 100%;
   height: auto;
-  object-fit: cover;
+  max-height: 300px;
+  object-fit: contain;
 }
 
 /* 按钮样式 */
