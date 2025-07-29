@@ -41,6 +41,7 @@ export interface CreateAlbumRequest {
 export interface UpdateAlbumRequest {
   title?: string;
   description?: string;
+  cover_url?: string;
 }
 
 /**

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { T, useLanguage } from './LanguageContext';
 import CreateAlbumModal from './CreateAlbumModal';
 import UploadPhotosModal from './UploadPhotosModal';
+import EditAlbumModal from './EditAlbumModal';
 import { albumService, Album, DeleteCoupleAlbumPhotosRequest } from '@/services/album-service';
 import { getCoupleSignedUrl } from '@/lib/services/coupleOssService';
 import ImageViewer from './ImageViewer';
@@ -30,6 +31,7 @@ export default function Albums() {
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAlbumDetailOpen, setIsAlbumDetailOpen] = useState(false);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +39,7 @@ export default function Albums() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlbum, setSelectedAlbum] = useState<{id: string, title: string} | null>(null);
   const [currentAlbum, setCurrentAlbum] = useState<Album | null>(null);
+  const [albumToEdit, setAlbumToEdit] = useState<Album | null>(null);
   const [albumPhotos, setAlbumPhotos] = useState<Photo[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [currentMedia, setCurrentMedia] = useState<Photo | null>(null);
@@ -47,8 +50,11 @@ export default function Albums() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
-  // 相册删除状态
   const [isDeletingAlbum, setIsDeletingAlbum] = useState<string | null>(null);
+  // 预加载缓存和防抖相关
+  const preloadCache = useRef<Set<string>>(new Set());
+  const preloadTimer = useRef<NodeJS.Timeout | null>(null);
+  const preloadQueue = useRef<string[]>([]);
   
   // 使用确认对话框
   const { openDialog, ConfirmationDialogComponent } = useConfirmationDialog();
@@ -99,6 +105,15 @@ export default function Albums() {
   // 组件挂载时加载相册列表
   useEffect(() => {
     loadAlbums();
+    
+    // 返回清理函数
+    return () => {
+      // 组件卸载时清除预加载定时器
+      if (preloadTimer.current) {
+        clearTimeout(preloadTimer.current);
+        preloadTimer.current = null;
+      }
+    };
   }, []);
   
   // 打开创建相册模态框
@@ -109,6 +124,40 @@ export default function Albums() {
   // 关闭创建相册模态框
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
+  };
+  
+  // 打开编辑相册模态框
+  const handleOpenEditModal = (album: Album, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡
+    setAlbumToEdit(album);
+    setIsEditModalOpen(true);
+  };
+  
+  // 关闭编辑相册模态框
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setAlbumToEdit(null);
+  };
+  
+  // 编辑相册成功后的回调
+  const handleAlbumUpdated = async (updatedAlbum: Album) => {
+    // 重新加载相册列表以确保数据是最新的
+    try {
+      await loadAlbums(true); // 强制刷新相册列表
+    } catch (err) {
+      console.error('Failed to reload albums after update:', err);
+      // 如果重新加载失败，仍然更新本地状态
+      setAlbums(prevAlbums => 
+        prevAlbums.map(album => 
+          album.id === updatedAlbum.id ? updatedAlbum : album
+        )
+      );
+    }
+    
+    // 如果当前打开的是被编辑的相册，更新当前相册信息
+    if (currentAlbum && currentAlbum.id === updatedAlbum.id) {
+      setCurrentAlbum(updatedAlbum);
+    }
   };
   
   // 创建相册成功后的回调
@@ -244,10 +293,20 @@ export default function Albums() {
   }, [currentAlbum, selectedAlbum, loadAlbumPhotos]);
   
   // 处理编辑相册按钮点击
-  const handleEditAlbum = (album: Album, e: React.MouseEvent) => {
+  const handleEditAlbum = async (album: Album, e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
-    // TODO: 实现编辑相册功能
-    console.log(`编辑相册: ${album.title} (ID: ${album.id})`);
+    
+    try {
+      // 调用接口获取最新的相册详情
+      const albumDetails = await albumService.getAlbum(album.id);
+      setAlbumToEdit(albumDetails);
+      setIsEditModalOpen(true);
+    } catch (err) {
+      console.error('Failed to fetch album details:', err);
+      // 即使获取详情失败，也使用传入的相册信息
+      setAlbumToEdit(album);
+      setIsEditModalOpen(true);
+    }
   };
   
   // 处理删除相册按钮点击
@@ -497,30 +556,72 @@ export default function Albums() {
               key={album.id} 
               onClick={() => handleAlbumClick(album)}
               onMouseEnter={() => {
-                // 预加载相册数据
-                albumService.getAlbumWithPhotos(album.id).then(async (albumWithPhotos) => {
-                  // 预处理照片URL签名
-                  if (albumWithPhotos.photos_videos && albumWithPhotos.photos_videos.length > 0) {
-                    // 只预加载前5张照片的签名URL
-                    const photosToPreload = albumWithPhotos.photos_videos.slice(0, 5);
-                    await Promise.all(
-                      photosToPreload.map(async (photo) => {
-                        try {
-                          if (photo.media_url) {
-                            await getCoupleSignedUrl(photo.media_url);
-                          }
-                          if (photo.thumbnail_url) {
-                            await getCoupleSignedUrl(photo.thumbnail_url);
-                          }
-                        } catch (err) {
-                          console.debug('预加载照片签名URL失败:', err);
-                        }
-                      })
-                    );
+                // 预加载相册数据，添加防抖和缓存机制
+                const albumId = album.id;
+                
+                // 如果已经预加载过，直接跳过
+                if (preloadCache.current.has(albumId)) {
+                  return;
+                }
+                
+                // 将相册ID添加到预加载队列
+                if (!preloadQueue.current.includes(albumId)) {
+                  preloadQueue.current.push(albumId);
+                }
+                
+                // 清除之前的定时器
+                if (preloadTimer.current) {
+                  clearTimeout(preloadTimer.current);
+                }
+                
+                // 设置新的防抖定时器（300ms）
+                preloadTimer.current = setTimeout(async () => {
+                  // 处理队列中的所有相册
+                  while (preloadQueue.current.length > 0) {
+                    const idToPreload = preloadQueue.current.shift();
+                    if (!idToPreload) continue;
+                    
+                    // 标记为已预加载
+                    preloadCache.current.add(idToPreload);
+                    
+                    try {
+                      const albumWithPhotos = await albumService.getAlbumWithPhotos(idToPreload);
+                      
+                      // 预处理照片URL签名
+                      if (albumWithPhotos.photos_videos && albumWithPhotos.photos_videos.length > 0) {
+                        // 只预加载前3张照片的签名URL，减少请求
+                        const photosToPreload = albumWithPhotos.photos_videos.slice(0, 3);
+                        await Promise.all(
+                          photosToPreload.map(async (photo) => {
+                            try {
+                              if (photo.media_url) {
+                                await getCoupleSignedUrl(photo.media_url);
+                              }
+                              if (photo.thumbnail_url) {
+                                await getCoupleSignedUrl(photo.thumbnail_url);
+                              }
+                            } catch (err) {
+                              console.debug('预加载照片签名URL失败:', err);
+                            }
+                          })
+                        );
+                      }
+                    } catch (err) {
+                      // 预加载失败时，从缓存中移除，以便稍后可以重试
+                      preloadCache.current.delete(idToPreload);
+                      console.debug('预加载相册数据失败:', err);
+                    }
                   }
-                }).catch(err => {
-                  console.debug('预加载相册数据失败:', err);
-                });
+                }, 300);
+              }}
+              onMouseLeave={() => {
+                // 鼠标离开时清除预加载定时器
+                if (preloadTimer.current) {
+                  clearTimeout(preloadTimer.current);
+                  preloadTimer.current = null;
+                  // 清空预加载队列
+                  preloadQueue.current = [];
+                }
               }}
             >
               <div className="album-cover">
@@ -591,6 +692,14 @@ export default function Albums() {
         isOpen={isCreateModalOpen} 
         onClose={handleCloseCreateModal} 
         onSuccess={handleAlbumCreated} 
+      />
+      
+      {/* 编辑相册模态框 */}
+      <EditAlbumModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        album={albumToEdit}
+        onSuccess={handleAlbumUpdated}
       />
       
       {/* 上传照片模态框 */}
