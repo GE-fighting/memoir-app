@@ -134,59 +134,87 @@ export default function Albums() {
   const loadAlbumPhotos = useCallback(async (albumId: string) => {
     // 避免重复加载同一个相册
     if (currentAlbum && currentAlbum.id === albumId && albumPhotos.length > 0) {
-      setIsAlbumDetailOpen(true);
       return;
     }
     
     try {
       setLoadingPhotos(true);
       const albumWithPhotos = await albumService.getAlbumWithPhotos(albumId);
-      setCurrentAlbum(albumWithPhotos);
+      
+      // 如果当前相册不是我们要加载的相册，更新状态
+      if (!currentAlbum || currentAlbum.id !== albumId) {
+        setCurrentAlbum(albumWithPhotos);
+      }
       
       // 处理照片URL，为每张照片生成签名URL
       if (albumWithPhotos.photos_videos && albumWithPhotos.photos_videos.length > 0) {
-        const photosWithSignedUrls = await Promise.all(
-          albumWithPhotos.photos_videos.map(async (photo) => {
-            try {
-              // 使用情侣相册专用的签名URL方法
-              let signedUrl = '';
-              if (photo.media_url) {
-                signedUrl = await getCoupleSignedUrl(photo.media_url);
-              }
-              
-              // 获取缩略图URL的签名链接（如果存在）
-              let thumbnailSignedUrl = '';
-              if (photo.thumbnail_url) {
-                thumbnailSignedUrl = await getCoupleSignedUrl(photo.thumbnail_url);
-              }
-              
-              return {
-                ...photo,
-                url: signedUrl, // 添加签名后的URL
-                thumbnail_url: thumbnailSignedUrl || '' // 使用签名后的缩略图URL
-              };
-            } catch (err) {
-              console.error('处理照片URL失败:', err);
-              return {
-                ...photo,
-                url: '', // 失败时使用空URL
-                thumbnail_url: ''
-              };
-            }
-          })
-        );
+        // 分批处理照片签名，避免阻塞UI
+        const batchSize = 10; // 每批处理10张照片
+        const photos = albumWithPhotos.photos_videos;
+        let processedPhotos: any[] = [];
         
-        // 过滤掉URL为空的项
-        const validPhotos = photosWithSignedUrls.filter(photo => photo.url);
-        setAlbumPhotos(validPhotos);
+        // 分批处理函数
+        const processBatch = async (startIndex: number) => {
+          const endIndex = Math.min(startIndex + batchSize, photos.length);
+          const batch = photos.slice(startIndex, endIndex);
+          
+          // 处理当前批次
+          const batchResults = await Promise.all(
+            batch.map(async (photo) => {
+              try {
+                // 使用情侣相册专用的签名URL方法
+                let signedUrl = '';
+                if (photo.media_url) {
+                  signedUrl = await getCoupleSignedUrl(photo.media_url);
+                }
+                
+                // 获取缩略图URL的签名链接（如果存在）
+                let thumbnailSignedUrl = '';
+                if (photo.thumbnail_url) {
+                  thumbnailSignedUrl = await getCoupleSignedUrl(photo.thumbnail_url);
+                }
+                
+                return {
+                  ...photo,
+                  url: signedUrl, // 添加签名后的URL
+                  thumbnail_url: thumbnailSignedUrl || '' // 使用签名后的缩略图URL
+                };
+              } catch (err) {
+                console.error('处理照片URL失败:', err);
+                return {
+                  ...photo,
+                  url: '', // 失败时使用空URL
+                  thumbnail_url: ''
+                };
+              }
+            })
+          );
+          
+          // 过滤掉URL为空的项并更新状态
+          const validPhotos = batchResults.filter(photo => photo.url || photo.thumbnail_url);
+          processedPhotos = [...processedPhotos, ...validPhotos];
+          setAlbumPhotos([...processedPhotos]);
+          
+          // 如果还有更多批次，继续处理
+          if (endIndex < photos.length) {
+            // 使用 requestAnimationFrame 让浏览器有机会更新UI
+            requestAnimationFrame(async () => {
+              await processBatch(endIndex);
+            });
+          }
+        };
+        
+        // 开始处理第一批次
+        await processBatch(0);
       } else {
         setAlbumPhotos([]);
       }
-      
-      setIsAlbumDetailOpen(true);
     } catch (err) {
       console.error('Failed to load album photos:', err);
       alert(language === 'zh' ? '加载相册照片失败' : 'Failed to load album photos');
+      // 出错时关闭模态框
+      setIsAlbumDetailOpen(false);
+      setCurrentAlbum(null);
     } finally {
       setLoadingPhotos(false);
     }
@@ -267,6 +295,12 @@ export default function Albums() {
   
   // 处理相册点击
   const handleAlbumClick = useCallback((album: Album) => {
+    // 立即打开模态框并显示加载状态
+    setCurrentAlbum(album);
+    setIsAlbumDetailOpen(true);
+    setAlbumPhotos([]); // 清空之前的照片数据
+    
+    // 异步加载相册照片
     loadAlbumPhotos(album.id);
   }, [loadAlbumPhotos]);
   
@@ -458,7 +492,37 @@ export default function Albums() {
       ) : (
         <div className="albums-grid">
           {filteredAlbums.map(album => (
-            <div className="album-card" key={album.id} onClick={() => handleAlbumClick(album)}>
+            <div 
+              className="album-card" 
+              key={album.id} 
+              onClick={() => handleAlbumClick(album)}
+              onMouseEnter={() => {
+                // 预加载相册数据
+                albumService.getAlbumWithPhotos(album.id).then(async (albumWithPhotos) => {
+                  // 预处理照片URL签名
+                  if (albumWithPhotos.photos_videos && albumWithPhotos.photos_videos.length > 0) {
+                    // 只预加载前5张照片的签名URL
+                    const photosToPreload = albumWithPhotos.photos_videos.slice(0, 5);
+                    await Promise.all(
+                      photosToPreload.map(async (photo) => {
+                        try {
+                          if (photo.media_url) {
+                            await getCoupleSignedUrl(photo.media_url);
+                          }
+                          if (photo.thumbnail_url) {
+                            await getCoupleSignedUrl(photo.thumbnail_url);
+                          }
+                        } catch (err) {
+                          console.debug('预加载照片签名URL失败:', err);
+                        }
+                      })
+                    );
+                  }
+                }).catch(err => {
+                  console.debug('预加载相册数据失败:', err);
+                });
+              }}
+            >
               <div className="album-cover">
                 <img 
                   src={album.cover_url || getDefaultCover(album.id)} 
