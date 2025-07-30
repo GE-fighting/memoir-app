@@ -4,6 +4,7 @@
 @import '../styles/layout.css';
 @import '../styles/albums.css';
 @import '../styles/upload.css';
+@import '../styles/personal-space.css';
 
 /* 导入Tailwind的基础样式，如重置和规范化样式 */
 @tailwind base;

@@ -1,0 +1,74 @@
+/* 个人空间相关样式 */
+
+/* 空间模式切换按钮 */
+.space-mode-toggle {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-primary);
+  margin-top: auto;
+}
+
+.mode-toggle-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.mode-toggle-btn:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 统一的激活状态样式，不区分个人空间或情侣空间 */
+.mode-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.sidebar.collapsed .mode-toggle-btn span {
+  display: none;
+}
+
+.sidebar.collapsed .mode-toggle-btn {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+/* 跳转箭头图标 */
+.arrow-icon {
+  margin-left: auto;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: transform 0.3s ease;
+}
+
+.mode-toggle-btn:hover .arrow-icon {
+  transform: translateX(3px);
+}
+
+.sidebar.collapsed .arrow-icon {
+  display: none;
+}
+
+.sidebar-menu {
+  margin-top: 0.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 确保侧边栏footer在底部 */
+.sidebar-footer {
+  margin-top: auto;
+}

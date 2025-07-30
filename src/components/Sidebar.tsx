@@ -1,4 +1,4 @@
-/**
+/** 
  * 侧边栏导航组件文件
  * 
  * 本文件实现了应用的主导航侧边栏，为用户提供应用的核心导航功能。
@@ -9,6 +9,7 @@
  * - 根据当前路由高亮活动菜单项
  * - 集成国际化支持，根据当前语言显示菜单文本
  * - 显示用户头像和简易信息
+ * - 提供个人空间与情侣空间切换功能
  * 
  * 该组件通常在MainLayout中使用，是应用布局的重要组成部分。
  */
@@ -17,9 +18,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from './LanguageContext';
 import { useAuth } from '@/contexts/auth-context';
+import { useSpaceMode } from '@/contexts/space-mode-context';
 import LogoutButton from './logout-button';
 
 interface MenuItem {
@@ -29,7 +31,8 @@ interface MenuItem {
   labelEn: string;
 }
 
-const menuItems: MenuItem[] = [
+// 情侣空间菜单项 (不包含个人空间)
+const coupleSpaceMenuItems: MenuItem[] = [
   {
     path: '/',
     icon: 'fas fa-chart-simple',
@@ -49,12 +52,6 @@ const menuItems: MenuItem[] = [
     labelEn: 'Albums'
   },
   {
-    path: '/personal',
-    icon: 'fas fa-user-circle',
-    labelZh: '个人空间',
-    labelEn: 'Personal Space'
-  },
-  {
     path: '/wishlist',
     icon: 'fas fa-heart-circle-check',
     labelZh: '心愿画卷',
@@ -68,15 +65,55 @@ const menuItems: MenuItem[] = [
   }
 ];
 
+// 个人空间菜单项 (包含个人空间和仪表盘)
+const personalSpaceMenuItems: MenuItem[] = [
+  {
+    path: '/personal',
+    icon: 'fas fa-chart-simple',
+    labelZh: '仪表盘',
+    labelEn: 'Dashboard'
+  },
+  {
+    path: '/personal/gallery',
+    icon: 'fas fa-user-circle',
+    labelZh: '个人空间',
+    labelEn: 'Personal Space'
+  },
+  {
+    path: '/account',
+    icon: 'fas fa-gear',
+    labelZh: '账户设置',
+    labelEn: 'Account Settings'
+  }
+];
+
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { language } = useLanguage();
   const { user } = useAuth();
+  const { spaceMode, setSpaceMode } = useSpaceMode();
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
+
+  // 切换空间模式并跳转到对应仪表盘
+  const toggleSpaceModeAndRedirect = () => {
+    const newMode = spaceMode === 'personal' ? 'couple' : 'personal';
+    setSpaceMode(newMode);
+    
+    // 跳转到对应的仪表盘页面
+    if (newMode === 'personal') {
+      router.push('/personal');
+    } else {
+      router.push('/');
+    }
+  };
+
+  // 根据当前模式选择菜单项
+  const menuItems = spaceMode === 'personal' ? personalSpaceMenuItems : coupleSpaceMenuItems;
 
   // 获取用户名的首字母作为头像显示
   const getInitial = () => {
@@ -97,6 +134,7 @@ export default function Sidebar() {
           <i className={`fas ${collapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`}></i>
         </button>
       </div>
+      
       <div className="sidebar-menu">
         {menuItems.map((item) => (
           <Link 
@@ -109,6 +147,22 @@ export default function Sidebar() {
           </Link>
         ))}
       </div>
+      
+      <div className="space-mode-toggle">
+        <button 
+          className={`mode-toggle-btn ${spaceMode === 'personal' ? 'active' : ''}`}
+          onClick={toggleSpaceModeAndRedirect}
+        >
+          <i className={`fas ${spaceMode === 'personal' ? 'fa-users' : 'fa-user'}`}></i>
+          <span>
+            {spaceMode === 'personal' 
+              ? (language === 'zh' ? '情侣空间' : 'Couple Space') 
+              : (language === 'zh' ? '个人空间' : 'Personal Space')}
+          </span>
+          <i className="fas fa-arrow-right arrow-icon"></i>
+        </button>
+      </div>
+      
       <div className="sidebar-footer">
         <div className="profile-preview">
           <div className="avatar">
