@@ -45,13 +45,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 运行时环境变量注入
+  // 注意：这确保了 Docker 镜像可以在不同环境中运行而无需重新构建
+  const jsonEnv = JSON.stringify({
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    NEXT_PUBLIC_API_PREFIX: process.env.NEXT_PUBLIC_API_PREFIX,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_AMAP_API_KEY: process.env.NEXT_PUBLIC_AMAP_API_KEY,
+  });
+
   return (
     <html lang="zh-CN">
       <head>
         {/* 加载外部字体图标库Font Awesome */}
-        <link 
-          rel="stylesheet" 
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        {/* 注入运行时环境变量 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ENV__ = ${jsonEnv}`,
+          }}
         />
       </head>
       <body

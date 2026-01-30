@@ -1,13 +1,19 @@
 "use client";
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { getEnvConfig } from "@/lib/config/env";
 
 // API 基础配置
+// API 基础配置
+const env = getEnvConfig();
 // 使用环境变量定义API基础URL，如果不存在则使用相对路径
-const API_BASE_URL = typeof window !== "undefined" 
-  ? process.env.NEXT_PUBLIC_API_BASE_URL || window.location.origin 
+const API_BASE_URL = typeof window !== "undefined"
+  ? env.apiBaseUrl.startsWith('http') ? env.apiBaseUrl : window.location.origin
   : "";
-const API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX || "/api/v1";
+const API_PREFIX = env.apiPrefix;
+
+
+
 
 /**
  * API响应接口
@@ -26,7 +32,7 @@ export interface ApiResponse<T = any> {
 export class ApiError extends Error {
   code: number;
   success: boolean;
-  
+
   constructor(message: string, code: number) {
     super(message);
     this.name = 'ApiError';
@@ -55,10 +61,10 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         // 从 localStorage 获取 token
-        const token = typeof window !== "undefined" 
-          ? localStorage.getItem("accessToken") 
+        const token = typeof window !== "undefined"
+          ? localStorage.getItem("accessToken")
           : null;
-        
+
         // 如果 token 存在，添加到请求头
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -73,51 +79,51 @@ class ApiClient {
       (response) => response,
       async (error: AxiosError) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-        
+
         // 处理 401 未授权错误 - 尝试刷新 token
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          
+
           try {
             // 尝试刷新 token
             const refreshToken = localStorage.getItem("refreshToken");
-            
+
             if (!refreshToken) {
               return Promise.reject(error);
             }
-            
+
             const refreshResponse = await axios.post(`${API_BASE_URL}${API_PREFIX}/auth/refresh`, {
               refresh_token: refreshToken,
             });
-            
+
             // 更新 tokens
-              const { access_token, refresh_token } = refreshResponse.data;
-              localStorage.setItem("accessToken", access_token);
-              localStorage.setItem("refreshToken", refresh_token);
-              
-              // 使用新 token 重试原请求
-              this.client.defaults.headers.common.Authorization = `Bearer ${access_token}`;
-              return this.client(originalRequest);
-            } catch (refreshError) {
-              // 刷新 token 失败，清除当前登录状态
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              
-              // 重定向到登录页
-              if (typeof window !== "undefined") {
-                window.location.href = "/auth/login";
-              }
-              
-              return Promise.reject(refreshError);
+            const { access_token, refresh_token } = refreshResponse.data;
+            localStorage.setItem("accessToken", access_token);
+            localStorage.setItem("refreshToken", refresh_token);
+
+            // 使用新 token 重试原请求
+            this.client.defaults.headers.common.Authorization = `Bearer ${access_token}`;
+            return this.client(originalRequest);
+          } catch (refreshError) {
+            // 刷新 token 失败，清除当前登录状态
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+
+            // 重定向到登录页
+            if (typeof window !== "undefined") {
+              window.location.href = "/auth/login";
             }
+
+            return Promise.reject(refreshError);
           }
-          
+        }
+
         // 处理其他错误
         return Promise.reject(error);
       }
     );
   }
-  
+
   /**
    * 验证API响应状态
    * @param response API响应对象
@@ -126,7 +132,7 @@ class ApiClient {
    */
   private validateResponse<T>(response: AxiosResponse<ApiResponse<T>>): T {
     const apiResponse = response.data;
-    
+
     // 检查响应状态
     if (!apiResponse.success) {
       throw new ApiError(
@@ -134,7 +140,7 @@ class ApiClient {
         apiResponse.code
       );
     }
-    
+
     // 返回响应数据
     return apiResponse.data as T;
   }
