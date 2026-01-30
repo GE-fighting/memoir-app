@@ -1,0 +1,14 @@
+.git
+.github
+.next
+node_modules
+logs
+docs
+.env
+.env.*
+*.log
+npm-debug.log
+pnpm-debug.log
+yarn-debug.log
+yarn-error.log
+.DS_Store
