@@ -3,14 +3,23 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { getEnvConfig } from "@/lib/config/env";
 
-// API 基础配置
-// API 基础配置
-const env = getEnvConfig();
-// 使用环境变量定义API基础URL，如果不存在则使用相对路径
-const API_BASE_URL = typeof window !== "undefined"
-  ? env.apiBaseUrl.startsWith('http') ? env.apiBaseUrl : window.location.origin
-  : "";
-const API_PREFIX = env.apiPrefix;
+/**
+ * 动态获取 API 基础 URL
+ * 每次调用时获取最新的环境变量，确保 window.__ENV__ 已注入
+ */
+const getApiBaseUrl = (): string => {
+  if (typeof window === "undefined") return "";
+  const env = getEnvConfig();
+  return env.apiBaseUrl.startsWith('http') ? env.apiBaseUrl : window.location.origin;
+};
+
+/**
+ * 动态获取 API 前缀
+ */
+const getApiPrefix = (): string => {
+  const env = getEnvConfig();
+  return env.apiPrefix;
+};
 
 
 
@@ -50,16 +59,24 @@ class ApiClient {
 
   constructor() {
     // 创建 axios 实例，合并基础URL和API前缀
+    // 动态获取配置，确保 window.__ENV__ 已注入
     this.client = axios.create({
-      baseURL: `${API_BASE_URL}${API_PREFIX}`,
+      baseURL: `${getApiBaseUrl()}${getApiPrefix()}`,
       headers: {
         "Content-Type": "application/json",
       },
     });
 
-    // 请求拦截器 - 添加 token
+    // 请求拦截器 - 添加 token 和动态 baseURL
     this.client.interceptors.request.use(
       (config) => {
+        // 动态更新 baseURL，确保每次请求使用最新的环境变量
+        // 这对于 Docker 运行时注入的环境变量尤为重要
+        const dynamicBaseUrl = `${getApiBaseUrl()}${getApiPrefix()}`;
+        if (dynamicBaseUrl && dynamicBaseUrl !== config.baseURL) {
+          config.baseURL = dynamicBaseUrl;
+        }
+
         // 从 localStorage 获取 token
         const token = typeof window !== "undefined"
           ? localStorage.getItem("accessToken")
@@ -92,7 +109,7 @@ class ApiClient {
               return Promise.reject(error);
             }
 
-            const refreshResponse = await axios.post(`${API_BASE_URL}${API_PREFIX}/auth/refresh`, {
+            const refreshResponse = await axios.post(`${getApiBaseUrl()}${getApiPrefix()}/auth/refresh`, {
               refresh_token: refreshToken,
             });
 
