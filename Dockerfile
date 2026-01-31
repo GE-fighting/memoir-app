@@ -22,5 +22,8 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/next.config.ts ./next.config.ts
+COPY --from=build /app/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 EXPOSE 3000
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
 CMD ["pnpm", "start"]

@@ -45,8 +45,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 运行时环境变量注入
-  // 注意：这确保了 Docker 镜像可以在不同环境中运行而无需重新构建
+  // 运行时环境变量注入（用于本地开发的 fallback）
+  // Docker 环境通过 docker-entrypoint.sh 生成 /public/env.js
   const jsonEnv = JSON.stringify({
     NEXT_PUBLIC_API_BASE_URL: process.env.RUNTIME_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL,
     NEXT_PUBLIC_API_PREFIX: process.env.RUNTIME_API_PREFIX || process.env.NEXT_PUBLIC_API_PREFIX,
@@ -62,10 +62,11 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
-        {/* 注入运行时环境变量 */}
+        {/* 注入运行时环境变量 - Docker 环境通过 env.js，本地开发通过内联脚本 */}
+        <script src="/env.js" async />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.__ENV__ = ${jsonEnv}`,
+            __html: `window.__ENV__ = window.__ENV__ || ${jsonEnv}`,
           }}
         />
       </head>

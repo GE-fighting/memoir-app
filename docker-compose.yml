@@ -7,8 +7,6 @@ services:
     container_name: memoir-app
     ports:
       - "3000:3000"
-    env_file:
-      - .env
     environment:
       NODE_ENV: production
       # 运行时注入的环境变量 (Run-time Injection)
