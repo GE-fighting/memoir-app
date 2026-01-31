@@ -48,10 +48,10 @@ export default function RootLayout({
   // 运行时环境变量注入
   // 注意：这确保了 Docker 镜像可以在不同环境中运行而无需重新构建
   const jsonEnv = JSON.stringify({
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
-    NEXT_PUBLIC_API_PREFIX: process.env.NEXT_PUBLIC_API_PREFIX,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_AMAP_API_KEY: process.env.NEXT_PUBLIC_AMAP_API_KEY,
+    NEXT_PUBLIC_API_BASE_URL: process.env.RUNTIME_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL,
+    NEXT_PUBLIC_API_PREFIX: process.env.RUNTIME_API_PREFIX || process.env.NEXT_PUBLIC_API_PREFIX,
+    NEXT_PUBLIC_APP_URL: process.env.RUNTIME_APP_URL || process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_AMAP_API_KEY: process.env.RUNTIME_AMAP_API_KEY || process.env.NEXT_PUBLIC_AMAP_API_KEY,
   });
 
   return (
